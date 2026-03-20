@@ -16,13 +16,32 @@ export default function MyBookings() {
       const { data } = await axios.get('/api/parking/my-bookings', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setBookings(data);
+      
+      const mockStr = localStorage.getItem('mockBookings');
+      const mockData = mockStr ? JSON.parse(mockStr) : [];
+      setBookings([...data, ...mockData]);
     } catch (error) {
       console.error('Error fetching bookings:', error);
+      // Fallback for demo
+      const mockStr = localStorage.getItem('mockBookings');
+      const mockData = mockStr ? JSON.parse(mockStr) : [];
+      setBookings(mockData);
     }
   };
 
   const handleRelease = async (spotId) => {
+    if (spotId.startsWith('Mock Slot') || spotId.startsWith('fake-')) {
+       const mockStr = localStorage.getItem('mockBookings');
+       if (mockStr) {
+           let mocks = JSON.parse(mockStr);
+           mocks = mocks.filter(b => b.spotId !== spotId);
+           localStorage.setItem('mockBookings', JSON.stringify(mocks));
+       }
+       toast.success('Parking released successfully');
+       fetchBookings();
+       return;
+    }
+    
     try {
       const token = localStorage.getItem('token');
       await axios.post(`/api/parking/release/${spotId}`, {}, {
