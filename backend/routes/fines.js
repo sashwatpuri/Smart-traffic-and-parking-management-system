@@ -1,0 +1,129 @@
+import express from 'express';
+import Fine from '../models/Fine.js';
+import User from '../models/User.js';
+import { authMiddleware, requirePermission } from '../middleware/auth.js';
+import { env } from '../config/env.js';
+import { logAudit } from '../services/auditLogger.js';
+
+const router = express.Router();
+
+router.get('/', authMiddleware, async (req, res) => {
+  try {
+    const canReadAll = req.user.permissions?.includes('fine:read');
+    const filter = canReadAll ? {} : { userId: req.user.userId };
+    const fines = await Fine.find(filter).populate('userId', 'name email').sort({ issuedAt: -1 });
+    res.json(fines);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.post('/issue', authMiddleware, requirePermission('fine:issue'), async (req, res) => {
+  try {
+    const { vehicleNumber, violationType, amount, location, imageUrl } = req.body;
+    const owner = await User.findOne({ vehicleNumber });
+
+    const fineId = `FINE${Date.now()}`;
+    const fine = new Fine({
+      fineId,
+      userId: owner?._id,
+      vehicleNumber,
+      violationType,
+      amount,
+      currency: 'INR',
+      location,
+      imageUrl,
+      warningIssued: true,
+      warningTime: new Date()
+    });
+
+    await fine.save();
+
+    await logAudit({
+      req,
+      action: 'fine.issue',
+      resourceType: 'fine',
+      resourceId: fine._id.toString(),
+      metadata: {
+        fineId: fine.fineId,
+        vehicleNumber,
+        amount,
+        currency: 'INR'
+      }
+    });
+
+    res.status(201).json(fine);
+  } catch (error) {
+    await logAudit({
+      req,
+      action: 'fine.issue',
+      resourceType: 'fine',
+      status: 'failure',
+      metadata: { error: error.message }
+    });
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Backward-compatible endpoint. Real payment flow is now handled by /api/payments/orders.
+router.post('/:id/pay', authMiddleware, async (req, res) => {
+  try {
+    const fine = await Fine.findById(req.params.id);
+    if (!fine) {
+      return res.status(404).json({ message: 'Fine not found' });
+    }
+
+    const canPayAny = req.user.permissions?.includes('fine:pay:any');
+    const canPayOwn = req.user.permissions?.includes('fine:pay:own');
+    const ownsFine = fine.userId?.toString() === req.user.userId;
+
+    if (!canPayAny && !(canPayOwn && ownsFine)) {
+      return res.status(403).json({ message: 'Insufficient permissions' });
+    }
+
+    if (env.PAYMENT_PROVIDER !== 'mock') {
+      return res.status(400).json({
+        message: 'Use /api/payments/orders for fine payments when payment provider is enabled'
+      });
+    }
+
+    fine.status = 'paid';
+    fine.paidAt = new Date();
+    fine.currency = 'INR';
+    await fine.save();
+
+    res.json({ message: 'Fine paid successfully', fine });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.delete('/:id', authMiddleware, requirePermission('fine:cancel'), async (req, res) => {
+  try {
+    const deleted = await Fine.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ message: 'Fine not found' });
+    }
+
+    await logAudit({
+      req,
+      action: 'fine.cancel',
+      resourceType: 'fine',
+      resourceId: req.params.id
+    });
+
+    res.json({ message: 'Fine cancelled' });
+  } catch (error) {
+    await logAudit({
+      req,
+      action: 'fine.cancel',
+      resourceType: 'fine',
+      resourceId: req.params.id,
+      status: 'failure',
+      metadata: { error: error.message }
+    });
+    res.status(500).json({ message: error.message });
+  }
+});
+
+export default router;
