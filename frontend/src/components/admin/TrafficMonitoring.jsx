@@ -12,11 +12,11 @@ export default function TrafficMonitoring() {
 
   // States of each zone
   const [zones, setZones] = useState([
-    { id: 1, name: 'Zone 1: Station Road', vehicles: 342, congestion: 'LOW', signal: 'Green', timer: 45, cam: 'CAM-STN-001' },
-    { id: 2, name: 'Zone 2: Market Central', vehicles: 890, congestion: 'MEDIUM', signal: 'Red', timer: 15, cam: 'CAM-MKT-002' },
-    { id: 3, name: 'Zone 3: Vijapur Road', vehicles: 756, congestion: 'MEDIUM', signal: 'Red', timer: 60, cam: 'CAM-VJP-003' },
-    { id: 4, name: 'Zone 4: Highway Junction', vehicles: 1204, congestion: 'HIGH', signal: 'Green', timer: 30, cam: 'CAM-HWY-004' },
-    { id: 5, name: 'Zone 5: Civil Hospital', vehicles: 210, congestion: 'LOW', signal: 'Red', timer: 25, cam: 'CAM-CVL-005' },
+    { id: 1, name: 'Zone 1: Station Road', vehicles: 342, congestion: 'LOW', signal: 'Green', timer: 45, cam: 'CAM-STN-001', videoUrl: '/videos/Hikvision_Traffic_Flow_Analysis_Camera_240P.mp4' },
+    { id: 2, name: 'Zone 2: Market Central', vehicles: 890, congestion: 'MEDIUM', signal: 'Red', timer: 15, cam: 'CAM-MKT-002', videoUrl: '/videos/Vehicle Detection and Traffic Counting using AI..mp4' },
+    { id: 3, name: 'Zone 3: Vijapur Road', vehicles: 756, congestion: 'MEDIUM', signal: 'Red', timer: 60, cam: 'CAM-VJP-003', videoUrl: '/videos/video_2.mp4' },
+    { id: 4, name: 'Zone 4: Highway Junction', vehicles: 1204, congestion: 'HIGH', signal: 'Green', timer: 30, cam: 'CAM-HWY-004', videoUrl: '/videos/video_3.mp4' },
+    { id: 5, name: 'Zone 5: Civil Hospital', vehicles: 210, congestion: 'LOW', signal: 'Red', timer: 25, cam: 'CAM-CVL-005', videoUrl: '/videos/video_4.mp4' },
     { id: 6, name: 'Zone 6: Main Square', vehicles: 950, congestion: 'HIGH', signal: 'Yellow', timer: 5, cam: 'CAM-SQR-006' },
     { id: 7, name: 'Zone 7: IT Park Rd', vehicles: 640, congestion: 'MEDIUM', signal: 'Green', timer: 50, cam: 'CAM-ITP-007' },
     { id: 8, name: 'Zone 8: South Bypass', vehicles: 112, congestion: 'LOW', signal: 'Green', timer: 10, cam: 'CAM-BPS-008' }
@@ -125,7 +125,8 @@ export default function TrafficMonitoring() {
           <div className="bg-[#1E293B] rounded-lg shadow-md h-full min-h-[400px] flex items-center justify-center relative overflow-hidden group border border-slate-700">
             {/* The Video Element */}
             <video 
-               src="/videos/Hikvision_Traffic_Flow_Analysis_Camera_240P.mp4" 
+               key={activeZone?.videoUrl || activeZone?.id}
+               src={activeZone?.videoUrl || "/videos/Hikvision_Traffic_Flow_Analysis_Camera_240P.mp4"} 
                autoPlay 
                loop 
                muted 
