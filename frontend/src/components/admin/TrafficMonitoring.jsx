@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { AlertTriangle } from 'lucide-react';
 
 export default function TrafficMonitoring() {
   // Global control mode state
@@ -131,6 +132,20 @@ export default function TrafficMonitoring() {
         ))}
       </div>
 
+      {/* Active Emergencies Box */}
+      <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg shadow-sm mb-6 flex items-center justify-between">
+        <div className="flex items-center">
+          <AlertTriangle className="h-6 w-6 text-red-500 mr-3 animate-pulse" />
+          <div>
+            <h3 className="text-lg font-bold text-red-800">Active Emergencies</h3>
+            <p className="text-sm font-semibold text-red-600 mt-0.5">System ready to activate green corridor when needed</p>
+          </div>
+        </div>
+        <div className="hidden sm:flex animate-pulse bg-white px-4 py-2 rounded shadow text-red-700 text-sm font-black tracking-widest border border-red-200">
+          TRACKING ACTIVE
+        </div>
+      </div>
+
       {/* 2-Column Layout */}
       <div className="flex flex-col lg:flex-row gap-6 mb-6">
         
@@ -161,13 +176,6 @@ export default function TrafficMonitoring() {
             {/* Top Right Label - Live Clock & Date */}
             <div className="absolute top-4 right-4 z-10 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded border border-slate-600 shadow-lg font-mono text-sm text-white">
               {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}
-            </div>
-
-            {/* Simulating vehicle bounding boxes (Detection Overlay) */}
-            <div className="absolute inset-0 pointer-events-none opacity-60 z-10 flex items-center justify-center">
-               <div className="absolute top-1/4 left-[30%] w-16 h-12 border-2 border-[#10B981] bg-[#10B981]/10 rounded flex items-start justify-start p-0.5"><span className="text-[8px] bg-[#10B981] text-white px-1 font-bold rounded-sm">CAR 98%</span></div>
-               <div className="absolute top-1/3 right-[25%] w-20 h-14 border-2 border-[#10B981] bg-[#10B981]/10 rounded flex items-start justify-start p-0.5"><span className="text-[8px] bg-[#10B981] text-white px-1 font-bold rounded-sm">BUS 95%</span></div>
-               <div className="absolute bottom-1/3 left-1/3 w-14 h-14 border-2 border-[#F59E0B] bg-[#F59E0B]/10 rounded flex items-start justify-start p-0.5"><span className="text-[8px] bg-[#F59E0B] text-white px-1 font-bold rounded-sm">BIKE 88%</span></div>
             </div>
 
             {/* Bottom Overlay Texts */}
