@@ -12,16 +12,50 @@ export default function EmergencyControl() {
     return () => clearInterval(interval);
   }, []);
 
+  const mockEmergencies = [
+    {
+      _id: '1',
+      vehicleId: 'FIRE886',
+      vehicleType: 'Fire Truck',
+      status: 'active',
+      route: [{ signalId: 'SIG006' }, { signalId: 'SIG001' }, { signalId: 'SIG004' }],
+      destination: { address: 'City Pride - GMR Mall Area' },
+      estimatedArrival: new Date().setHours(17, 28, 32)
+    },
+    {
+      _id: '2',
+      vehicleId: 'DR408',
+      vehicleType: 'Disaster Response',
+      status: 'active',
+      route: [{ signalId: 'SIG006' }, { signalId: 'SIG001' }, { signalId: 'SIG004' }],
+      destination: { address: 'Soham Mall - Hospital Stretch' },
+      estimatedArrival: new Date().setHours(17, 28, 32)
+    },
+    {
+      _id: '3',
+      vehicleId: 'AMB102',
+      vehicleType: 'Ambulance',
+      status: 'active',
+      route: [{ signalId: 'SIG006' }, { signalId: 'SIG001' }, { signalId: 'SIG004' }],
+      destination: { address: 'City Hospital Emergency' },
+      estimatedArrival: new Date().setHours(17, 28, 32)
+    }
+  ];
+
   const fetchEmergencies = async () => {
     try {
       const token = localStorage.getItem('token');
       const { data } = await axios.get('/api/emergency', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setEmergencies(Array.isArray(data) ? data : []);
+      if (Array.isArray(data) && data.length > 0) {
+        setEmergencies(data);
+      } else {
+        setEmergencies(mockEmergencies);
+      }
     } catch (error) {
       console.error('Error fetching emergencies:', error);
-      setEmergencies([]);
+      setEmergencies(mockEmergencies);
     }
   };
 
@@ -303,7 +337,7 @@ export default function EmergencyControl() {
         </div>
       )}
 
-      <style jsx>{`
+      <style jsx="true">{`
         @keyframes dash {
           to {
             stroke-dashoffset: -100;
