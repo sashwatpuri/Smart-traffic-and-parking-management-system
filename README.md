@@ -10,7 +10,10 @@ A comprehensive Smart Traffic Management Platform with AI-powered traffic optimi
 - Automated signal control based on traffic density
 - Inter-signal coordination and synchronization
 - Parking violation detection and fine issuance
+- AI-powered illegal parking detection with Hugging Face dataset
+- Automatic license plate recognition and fine generation
 - Emergency green corridor management
+- Encroachment & obstruction monitoring with AI detection
 - Traffic analytics and reporting
 
 ### Citizen Dashboard

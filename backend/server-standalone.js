@@ -37,6 +37,8 @@ let trafficSignals = [];
 let parkingSpots = [];
 let fines = [];
 let emergencies = [];
+let encroachments = [];
+let illegalParkingViolations = [];
 
 // ============================================
 // CONCURRENCY CONTROL FOR ATOMIC BOOKING
@@ -609,6 +611,155 @@ app.put('/api/emergency/:id/complete', authMiddleware, adminOnly, (req, res) => 
   }
 });
 
+// Encroachment routes
+app.get('/api/encroachments', authMiddleware, (req, res) => {
+  res.json(encroachments);
+});
+
+app.get('/api/encroachments/:id', authMiddleware, (req, res) => {
+  const encroachment = encroachments.find(e => e.id === req.params.id);
+  if (encroachment) {
+    res.json(encroachment);
+  } else {
+    res.status(404).json({ message: 'Encroachment not found' });
+  }
+});
+
+app.put('/api/encroachments/:id/resolve', authMiddleware, adminOnly, (req, res) => {
+  try {
+    const encroachment = encroachments.find(e => e.id === req.params.id);
+    if (encroachment) {
+      encroachment.status = 'resolved';
+      encroachment.resolvedAt = new Date();
+      io.emit('encroachment-resolved', encroachment);
+      res.json(encroachment);
+    } else {
+      res.status(404).json({ message: 'Encroachment not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.put('/api/encroachments/:id/ignore', authMiddleware, adminOnly, (req, res) => {
+  try {
+    const encroachment = encroachments.find(e => e.id === req.params.id);
+    if (encroachment) {
+      encroachment.status = 'ignored';
+      io.emit('encroachment-ignored', encroachment);
+      res.json(encroachment);
+    } else {
+      res.status(404).json({ message: 'Encroachment not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Illegal Parking Detection routes
+app.get('/api/illegal-parking', authMiddleware, (req, res) => {
+  res.json(illegalParkingViolations);
+});
+
+app.get('/api/illegal-parking/:id', authMiddleware, (req, res) => {
+  const violation = illegalParkingViolations.find(v => v.id === req.params.id);
+  if (violation) {
+    res.json(violation);
+  } else {
+    res.status(404).json({ message: 'Violation not found' });
+  }
+});
+
+app.post('/api/illegal-parking/:id/send-alert', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const violation = illegalParkingViolations.find(v => v.id === req.params.id);
+    if (violation) {
+      violation.alertSent = true;
+      violation.alertDetails = {
+        alertId: `ALT${Date.now()}`,
+        sentAt: new Date(),
+        recipient: violation.authority.name,
+        method: 'SMS + App Notification'
+      };
+      violation.status = 'alert-sent';
+      io.emit('illegal-parking-alert-sent', violation);
+      res.json(violation);
+    } else {
+      res.status(404).json({ message: 'Violation not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.post('/api/illegal-parking/:id/issue-fine', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const violation = illegalParkingViolations.find(v => v.id === req.params.id);
+    if (violation) {
+      const fine = {
+        _id: String(fines.length + 1),
+        vehicleNumber: violation.licensePlate,
+        violationType: violation.violationType,
+        amount: violation.fineAmount,
+        location: violation.location,
+        imageUrl: violation.imageUrl,
+        status: 'pending',
+        issuedAt: new Date(),
+        dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
+        paymentLink: `https://traffic.gov.in/pay/${violation.id}`
+      };
+      
+      fines.push(fine);
+      violation.status = 'fine-issued';
+      violation.fineDetails = {
+        fineId: fine._id,
+        dueDate: fine.dueDate
+      };
+      
+      io.emit('illegal-parking-fine-issued', { violation, fine });
+      res.json({ violation, fine });
+    } else {
+      res.status(404).json({ message: 'Violation not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.put('/api/illegal-parking/:id/dismiss', authMiddleware, adminOnly, (req, res) => {
+  try {
+    const violation = illegalParkingViolations.find(v => v.id === req.params.id);
+    if (violation) {
+      violation.status = 'dismissed';
+      violation.dismissedReason = req.body.reason || 'False positive';
+      io.emit('illegal-parking-dismissed', violation);
+      res.json(violation);
+    } else {
+      res.status(404).json({ message: 'Violation not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.get('/api/illegal-parking/stats/summary', authMiddleware, (req, res) => {
+  const stats = {
+    total: illegalParkingViolations.length,
+    detected: illegalParkingViolations.filter(v => v.status === 'detected').length,
+    alertSent: illegalParkingViolations.filter(v => v.status === 'alert-sent').length,
+    fineIssued: illegalParkingViolations.filter(v => v.status === 'fine-issued').length,
+    paid: illegalParkingViolations.filter(v => v.status === 'paid').length,
+    dismissed: illegalParkingViolations.filter(v => v.status === 'dismissed').length,
+    totalFineAmount: illegalParkingViolations
+      .filter(v => v.status === 'fine-issued' || v.status === 'paid')
+      .reduce((sum, v) => sum + v.fineAmount, 0),
+    collectedAmount: illegalParkingViolations
+      .filter(v => v.status === 'paid')
+      .reduce((sum, v) => sum + v.fineAmount, 0)
+  };
+  res.json(stats);
+});
+
 // Socket.io
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
@@ -650,9 +801,227 @@ function startTrafficSimulation() {
   }, 5000);
 }
 
+// Encroachment simulation
+function startEncroachmentSimulation() {
+  const CAMERA_LOCATIONS = [
+    { cameraId: 'CAM001', location: 'MG Road', zone: 'footpath' },
+    { cameraId: 'CAM002', location: 'Brigade Road', zone: 'road-lane' },
+    { cameraId: 'CAM003', location: 'Commercial Street', zone: 'no-parking' },
+    { cameraId: 'CAM004', location: 'Indiranagar', zone: 'restricted-area' },
+    { cameraId: 'CAM005', location: 'Koramangala', zone: 'footpath' }
+  ];
+
+  const OBJECT_TYPES = ['vendor', 'cart', 'vehicle', 'obstacle', 'hawker'];
+  
+  // Image pool for different object types
+  const getImageForObject = (objectType, zone) => {
+    const imageMap = {
+      'vendor': ['/images/encroachment/hawker1.jpg', '/images/encroachment/hawker2.jpg'],
+      'hawker': ['/images/encroachment/hawker1.jpg', '/images/encroachment/hawker2.jpg'],
+      'cart': ['/images/encroachment/hawker1.jpg'],
+      'vehicle': ['/images/encroachment/hawker2.jpg'],
+      'obstacle': ['/images/encroachment/hawker1.jpg']
+    };
+    
+    const images = imageMap[objectType] || imageMap['vendor'];
+    return images[Math.floor(Math.random() * images.length)];
+  };
+  
+  // Generate initial encroachments
+  for (let i = 0; i < 3; i++) {
+    const camera = CAMERA_LOCATIONS[Math.floor(Math.random() * CAMERA_LOCATIONS.length)];
+    const detectedObject = OBJECT_TYPES[Math.floor(Math.random() * OBJECT_TYPES.length)];
+    
+    const severityMap = {
+      'road-lane': 'high',
+      'footpath': 'medium',
+      'no-parking': 'medium',
+      'restricted-area': 'high'
+    };
+
+    const encroachment = {
+      id: `ENC${String(encroachments.length + 1).padStart(3, '0')}`,
+      cameraId: camera.cameraId,
+      location: camera.location,
+      zone: camera.zone,
+      detectedObject,
+      licensePlate: detectedObject === 'vehicle' ? generateLicensePlate() : null,
+      imageUrl: getImageForObject(detectedObject, camera.zone),
+      detectionTime: new Date(Date.now() - Math.random() * 600000), // Random time in last 10 min
+      status: 'detected',
+      stationaryDuration: Math.floor(Math.random() * 600),
+      coordinates: generateCoordinates(camera.location),
+      severity: severityMap[camera.zone] || 'low',
+      notes: `${detectedObject} detected in ${camera.zone}`
+    };
+
+    encroachments.push(encroachment);
+  }
+
+  // Periodic detection and status updates
+  setInterval(() => {
+    // Update existing encroachments
+    encroachments.forEach(enc => {
+      if (['detected', 'warning-issued', 'alert-sent'].includes(enc.status)) {
+        const duration = Math.floor((Date.now() - new Date(enc.detectionTime)) / 1000);
+        enc.stationaryDuration = duration;
+
+        // Issue warning after 5 minutes (300 seconds)
+        if (duration >= 300 && enc.status === 'detected') {
+          enc.status = 'warning-issued';
+          enc.warningIssuedAt = new Date();
+          io.emit('encroachment-warning', enc);
+        }
+
+        // Send alert after 10 minutes (600 seconds)
+        if (duration >= 600 && enc.status === 'warning-issued') {
+          enc.status = 'alert-sent';
+          enc.alertSentAt = new Date();
+          io.emit('encroachment-alert', enc);
+        }
+      }
+    });
+
+    // Randomly add new encroachment (20% chance)
+    if (Math.random() < 0.2) {
+      const camera = CAMERA_LOCATIONS[Math.floor(Math.random() * CAMERA_LOCATIONS.length)];
+      const detectedObject = OBJECT_TYPES[Math.floor(Math.random() * OBJECT_TYPES.length)];
+      
+      const severityMap = {
+        'road-lane': 'high',
+        'footpath': 'medium',
+        'no-parking': 'medium',
+        'restricted-area': 'high'
+      };
+
+      const encroachment = {
+        id: `ENC${String(encroachments.length + 1).padStart(3, '0')}`,
+        cameraId: camera.cameraId,
+        location: camera.location,
+        zone: camera.zone,
+        detectedObject,
+        licensePlate: detectedObject === 'vehicle' ? generateLicensePlate() : null,
+        imageUrl: getImageForObject(detectedObject, camera.zone),
+        detectionTime: new Date(),
+        status: 'detected',
+        stationaryDuration: 0,
+        coordinates: generateCoordinates(camera.location),
+        severity: severityMap[camera.zone] || 'low',
+        notes: `${detectedObject} detected in ${camera.zone}`
+      };
+
+      encroachments.push(encroachment);
+      io.emit('encroachment-detected', encroachment);
+    }
+
+    io.emit('encroachment-update', encroachments);
+  }, 10000); // Update every 10 seconds
+}
+
+function generateLicensePlate() {
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const numbers = '0123456789';
+  return `${letters[Math.floor(Math.random() * 26)]}${letters[Math.floor(Math.random() * 26)]}-${
+    numbers[Math.floor(Math.random() * 10)]}${numbers[Math.floor(Math.random() * 10)]}-${
+    letters[Math.floor(Math.random() * 26)]}${letters[Math.floor(Math.random() * 26)]}-${
+    numbers[Math.floor(Math.random() * 10)]}${numbers[Math.floor(Math.random() * 10)]}${
+    numbers[Math.floor(Math.random() * 10)]}${numbers[Math.floor(Math.random() * 10)]}`;
+}
+
+function generateCoordinates(location) {
+  const baseCoords = {
+    'MG Road': { lat: 12.9716, lng: 77.5946 },
+    'Brigade Road': { lat: 12.9698, lng: 77.6072 },
+    'Commercial Street': { lat: 12.9833, lng: 77.6089 },
+    'Indiranagar': { lat: 12.9784, lng: 77.6408 },
+    'Koramangala': { lat: 12.9352, lng: 77.6245 }
+  };
+
+  const base = baseCoords[location] || { lat: 12.9716, lng: 77.5946 };
+  return {
+    lat: base.lat + (Math.random() - 0.5) * 0.01,
+    lng: base.lng + (Math.random() - 0.5) * 0.01
+  };
+}
+
+// Illegal Parking Detection simulation
+async function startIllegalParkingDetection() {
+  const { default: illegalParkingDetector } = await import('./services/illegalParkingDetector.js');
+  
+  // Initial detection - create 5 violations
+  try {
+    console.log('🚗 Fetching illegal parking data from Hugging Face...');
+    const data = await illegalParkingDetector.fetchIllegalParkingData();
+    
+    // Process first 5 detections
+    for (let i = 0; i < Math.min(5, data.length); i++) {
+      const violation = await illegalParkingDetector.processDetection(data[i], illegalParkingViolations.length);
+      illegalParkingViolations.push(violation);
+    }
+    
+    console.log(`✅ Loaded ${illegalParkingViolations.length} illegal parking violations`);
+  } catch (error) {
+    console.error('⚠️  Failed to fetch from Hugging Face, using simulated data:', error.message);
+    
+    // Fallback: Create simulated violations
+    for (let i = 0; i < 5; i++) {
+      const violation = await illegalParkingDetector.processDetection({}, illegalParkingViolations.length);
+      illegalParkingViolations.push(violation);
+    }
+  }
+  
+  // Periodic detection (every 30 seconds)
+  setInterval(async () => {
+    // 30% chance of new detection
+    if (Math.random() < 0.3) {
+      try {
+        const data = illegalParkingDetector.detectionCache.length > 0 
+          ? illegalParkingDetector.detectionCache 
+          : await illegalParkingDetector.fetchIllegalParkingData();
+        
+        const randomIndex = Math.floor(Math.random() * data.length);
+        const violation = await illegalParkingDetector.processDetection(
+          data[randomIndex] || {}, 
+          illegalParkingViolations.length
+        );
+        
+        illegalParkingViolations.push(violation);
+        io.emit('illegal-parking-detected', violation);
+        
+        console.log(`🚨 New illegal parking detected: ${violation.licensePlate} at ${violation.location}`);
+      } catch (error) {
+        console.error('Error in illegal parking detection:', error.message);
+      }
+    }
+    
+    // Auto-send alerts for detected violations (after 2 minutes)
+    illegalParkingViolations.forEach(violation => {
+      if (violation.status === 'detected' && !violation.alertSent) {
+        const timeSinceDetection = Date.now() - new Date(violation.detectionTime).getTime();
+        if (timeSinceDetection > 120000) { // 2 minutes
+          violation.alertSent = true;
+          violation.alertDetails = {
+            alertId: `ALT${Date.now()}`,
+            sentAt: new Date(),
+            recipient: violation.authority.name,
+            method: 'SMS + App Notification'
+          };
+          violation.status = 'alert-sent';
+          io.emit('illegal-parking-alert-sent', violation);
+          console.log(`📢 Alert sent to ${violation.authority.name} for ${violation.licensePlate}`);
+        }
+      }
+    });
+    
+    io.emit('illegal-parking-update', illegalParkingViolations);
+  }, 30000); // Every 30 seconds
+}
+
 // Initialize and start
 initializeData();
 startTrafficSimulation();
+startEncroachmentSimulation();
+startIllegalParkingDetection();
 
 const PORT = 5000;
 httpServer.listen(PORT, () => {

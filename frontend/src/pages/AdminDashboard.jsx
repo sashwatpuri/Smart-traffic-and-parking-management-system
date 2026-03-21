@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Car, ParkingCircle, AlertTriangle, Activity, LogOut, Truck, Menu, X } from 'lucide-react';
+import { Car, ParkingCircle, AlertTriangle, Activity, LogOut, Truck, Menu, X, Camera, Ban } from 'lucide-react';
 import TrafficMonitoring from '../components/admin/TrafficMonitoring';
 import ParkingManagement from '../components/admin/ParkingManagement';
 import ViolationManagement from '../components/admin/ViolationManagement';
 import EmergencyControl from '../components/admin/EmergencyControl';
 import Analytics from '../components/admin/Analytics';
+import EncroachmentMonitoring from '../components/admin/EncroachmentMonitoring';
+import IllegalParkingDetection from '../components/admin/IllegalParkingDetection';
 
 export default function AdminDashboard({ user, onLogout }) {
   const location = useLocation();
@@ -21,6 +23,8 @@ export default function AdminDashboard({ user, onLogout }) {
     { id: 'traffic', label: 'Traffic Monitoring', icon: Car, path: '/admin/traffic', color: 'blue' },
     { id: 'parking', label: 'Parking Management', icon: ParkingCircle, path: '/admin/parking', color: 'green' },
     { id: 'violations', label: 'Violations', icon: AlertTriangle, path: '/admin/violations', color: 'orange' },
+    { id: 'illegal-parking', label: 'Illegal Parking AI', icon: Ban, path: '/admin/illegal-parking', color: 'rose' },
+    { id: 'encroachment', label: 'Encroachment Monitor', icon: Camera, path: '/admin/encroachment', color: 'indigo' },
     { id: 'emergency', label: 'Emergency', icon: Truck, path: '/admin/emergency', color: 'red' },
     { id: 'analytics', label: 'Analytics', icon: Activity, path: '/admin/analytics', color: 'purple' }
   ];
@@ -30,6 +34,8 @@ export default function AdminDashboard({ user, onLogout }) {
       blue: isActive ? 'bg-blue-600 text-white' : 'text-blue-600 hover:bg-blue-50',
       green: isActive ? 'bg-green-600 text-white' : 'text-green-600 hover:bg-green-50',
       orange: isActive ? 'bg-orange-600 text-white' : 'text-orange-600 hover:bg-orange-50',
+      rose: isActive ? 'bg-rose-600 text-white' : 'text-rose-600 hover:bg-rose-50',
+      indigo: isActive ? 'bg-indigo-600 text-white' : 'text-indigo-600 hover:bg-indigo-50',
       red: isActive ? 'bg-red-600 text-white' : 'text-red-600 hover:bg-red-50',
       purple: isActive ? 'bg-purple-600 text-white' : 'text-purple-600 hover:bg-purple-50'
     };
@@ -124,6 +130,8 @@ export default function AdminDashboard({ user, onLogout }) {
               <Route path="/traffic" element={<TrafficMonitoring />} />
               <Route path="/parking" element={<ParkingManagement />} />
               <Route path="/violations" element={<ViolationManagement />} />
+              <Route path="/illegal-parking" element={<IllegalParkingDetection />} />
+              <Route path="/encroachment" element={<EncroachmentMonitoring />} />
               <Route path="/emergency" element={<EmergencyControl />} />
               <Route path="/analytics" element={<Analytics />} />
             </Routes>
