@@ -1,32 +1,90 @@
 import mongoose from 'mongoose';
 
-const parkingSpotSchema = new mongoose.Schema({
-  spotId: { type: String, required: true, unique: true },
-  zone: String,
-  location: {
-    name: String,
-    lat: Number,
-    lng: Number
-  },
-  status: { type: String, enum: ['available', 'occupied', 'reserved'], default: 'available' },
-  type: { type: String, enum: ['regular', 'disabled', 'ev'], default: 'regular' },
-  pricePerHour: { type: Number, default: 20 },
-  currency: { type: String, default: 'INR' },
-  currentBooking: {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    vehicleNumber: String,
-    startTime: Date,
-    endTime: Date,
-    paymentStatus: {
+const parkingSpotSchema = new mongoose.Schema(
+  {
+    spotId: {
       type: String,
-      enum: ['pending', 'paid'],
-      default: 'pending'
+      required: true,
+      unique: true,
+      uppercase: true,
+      trim: true
     },
-    paymentTransactionId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'PaymentTransaction'
+    zoneId: {
+      type: String,
+      required: true,
+      uppercase: true,
+      index: true
+    },
+    // Legacy field kept for compatibility
+    zone: {
+      type: String,
+      index: true
+    },
+    location: {
+      name: String,
+      lat: { type: Number, min: -90, max: 90 },
+      lng: { type: Number, min: -180, max: 180 }
+    },
+    status: {
+      type: String,
+      enum: ['available', 'occupied', 'reserved', 'maintenance'],
+      default: 'available',
+      index: true
+    },
+    type: {
+      type: String,
+      enum: ['regular', 'disabled', 'ev', 'vip'],
+      default: 'regular',
+      index: true
+    },
+    floor: {
+      type: Number,
+      default: 0
+    },
+    pricePerHour: {
+      type: Number,
+      default: 20,
+      min: 0
+    },
+    currency: {
+      type: String,
+      default: 'INR'
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+      index: true
+    },
+    currentBooking: {
+      bookingId: { type: mongoose.Schema.Types.ObjectId, ref: 'ParkingBooking' },
+      userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      vehicleNumber: String,
+      startTime: Date,
+      endTime: Date,
+      paymentStatus: {
+        type: String,
+        enum: ['pending', 'paid'],
+        default: 'pending'
+      },
+      paymentTransactionId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'PaymentTransaction'
+      }
+    },
+    lastOccupiedAt: Date,
+    totalBookings: {
+      type: Number,
+      default: 0
     }
-  }
-}, { timestamps: true });
+  },
+  { timestamps: true }
+);
+
+// Compound indexes for common queries
+parkingSpotSchema.index({ zoneId: 1, status: 1 });
+parkingSpotSchema.index({ zone: 1, status: 1 });
+parkingSpotSchema.index({ zone: 1, type: 1 });
+parkingSpotSchema.index({ 'currentBooking.userId': 1 });
+parkingSpotSchema.index({ isActive: 1, status: 1 });
 
 export default mongoose.model('ParkingSpot', parkingSpotSchema);

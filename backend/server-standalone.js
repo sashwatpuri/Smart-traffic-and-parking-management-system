@@ -151,9 +151,14 @@ function initializeData() {
   }));
 
   const PARKING_ZONES = [
-    { zone: 'Zone A', count: 20, lat: 40.7128, lng: -74.0060 },
-    { zone: 'Zone B', count: 15, lat: 40.7148, lng: -74.0080 },
-    { zone: 'Zone C', count: 25, lat: 40.7168, lng: -74.0100 }
+    { zone: 'Zone 1', count: 20, lat: 40.7128, lng: -74.0060 },
+    { zone: 'Zone 2', count: 15, lat: 40.7138, lng: -74.0070 },
+    { zone: 'Zone 3', count: 25, lat: 40.7148, lng: -74.0080 },
+    { zone: 'Zone 4', count: 18, lat: 40.7158, lng: -74.0090 },
+    { zone: 'Zone 5', count: 22, lat: 40.7168, lng: -74.0100 },
+    { zone: 'Zone 6', count: 30, lat: 40.7178, lng: -74.0110 },
+    { zone: 'Zone 7', count: 12, lat: 40.7188, lng: -74.0120 },
+    { zone: 'Zone 8', count: 16, lat: 40.7198, lng: -74.0130 }
   ];
 
   parkingSpots = [];

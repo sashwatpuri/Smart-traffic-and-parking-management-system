@@ -38,68 +38,34 @@ export default function ParkingBooking({ user }) {
     return acc;
   }, {});
 
-  // Pass additional placeholder zones natively into the map to populate the selector menu powerfully
-  ['Zone D', 'Zone E', 'Zone F', 'VIP Sector', 'Express H'].forEach(z => {
-      if (!zonesMap[z]) {
-         // Generate a pseudo-realistic matching zone
-         zonesMap[z] = { id: z, name: z, pricePerHour: [50, 80, 100, 120, 150][Math.floor(Math.random()*5)], spots: [] };
-      }
-  });
-
-  const zonesList = Object.values(zonesMap).sort((a,b) => a.name.localeCompare(b.name));
+  const zonesList = Object.values(zonesMap).sort((a,b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
   const activeZone = zonesMap[selectedZone];
 
-  // Generate distinct top-down parking bays map
+  // Organize real spots into lanes (groups of 10)
   const parkingLanes = useMemo(() => {
     if (!activeZone) return [];
     
-    const realSpots = [...activeZone.spots];
+    const sorted = [...activeZone.spots].sort((a, b) => a.spotId.localeCompare(b.spotId));
     const lanes = [];
     const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-    const numLanes = 8;
     
-    // Create base spots in 8 lanes
-    for (let lIdx = 0; lIdx < numLanes; lIdx++) {
-      const letter = letters[lIdx];
+    for (let i = 0; i < sorted.length; i += 10) {
+      const lIdx = Math.floor(i / 10);
+      const letter = letters[lIdx] || String.fromCharCode(65 + lIdx);
       const lane = { id: `Lane ${letter}`, label: `LANE ${letter}`, spots: [] };
-      for (let s = 1; s <= 10; s++) {
-          const fakeId = `fake-${lIdx}-${s}`;
-          // Deterministic fake occupation logic so it doesn't flicker, plus localBookings
-          const isFakeOccupied = ((lIdx * 7) + (s * 3)) % 10 > 5;
-          const status = localBookings.includes(fakeId) ? 'occupied' : (isFakeOccupied ? 'occupied' : 'available');
-          
-          lane.spots.push({ 
-            spotId: fakeId, 
-            status: status, 
-            isReal: false, 
-            displayNum: `${letter}${s < 10 ? '0'+s : s}` 
-          });
-      }
+      
+      const chunk = sorted.slice(i, i + 10);
+      chunk.forEach((spot, j) => {
+        const finalStatus = localBookings.includes(spot.spotId) ? 'occupied' : spot.status;
+        lane.spots.push({
+          ...spot,
+          status: finalStatus,
+          isReal: true,
+          displayNum: `${letter}${String(j + 1).padStart(2, '0')}`
+        });
+      });
+      
       lanes.push(lane);
-    }
-    
-    // Scatter real spots across the layout replacing fake ones
-    if (realSpots.length > 0) {
-        const totalSpots = numLanes * 10;
-        let step = Math.floor(totalSpots / realSpots.length);
-        if (step < 1) step = 1;
-        let curr = 0;
-        for (const rs of realSpots) {
-           if (curr >= totalSpots) curr = totalSpots - 1;
-           const lIdx = Math.floor(curr / 10);
-           const sIdx = curr % 10;
-           
-           // If a real spot was locally booked, mock its occupation until next fetch
-           const finalStatus = localBookings.includes(rs.spotId) ? 'occupied' : rs.status;
-           
-           lanes[lIdx].spots[sIdx] = { 
-               ...rs, 
-               status: finalStatus,
-               isReal: true, 
-               displayNum: `${letters[lIdx]}${sIdx + 1 < 10 ? '0'+(sIdx+1) : sIdx+1}` 
-           };
-           curr += step;
-        }
     }
     
     return lanes;
