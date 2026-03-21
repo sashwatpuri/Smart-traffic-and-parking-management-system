@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
-import { ParkingCircle, CreditCard, AlertCircle, LogOut, User, Menu, X } from 'lucide-react';
+import { ParkingCircle, CreditCard, AlertCircle, LogOut, User, Menu, X, Camera } from 'lucide-react';
 import ParkingBooking from '../components/citizen/ParkingBooking';
 import MyBookings from '../components/citizen/MyBookings';
 import MyFines from '../components/citizen/MyFines';
+import ReportViolation from '../components/citizen/ReportViolation';
 
 export default function CitizenDashboard({ user, onLogout }) {
   const location = useLocation();
@@ -18,7 +19,8 @@ export default function CitizenDashboard({ user, onLogout }) {
   const tabs = [
     { id: 'parking', label: 'Book Parking', icon: ParkingCircle, path: '/citizen/parking', color: 'blue' },
     { id: 'bookings', label: 'My Bookings', icon: User, path: '/citizen/bookings', color: 'green' },
-    { id: 'fines', label: 'My Fines', icon: AlertCircle, path: '/citizen/fines', color: 'orange' }
+    { id: 'fines', label: 'My Fines', icon: AlertCircle, path: '/citizen/fines', color: 'orange' },
+    { id: 'report', label: 'Report Violation', icon: Camera, path: '/citizen/report', color: 'red' }
   ];
 
   const getColorClasses = (color, isActive) => {
@@ -118,6 +120,7 @@ export default function CitizenDashboard({ user, onLogout }) {
               <Route path="/parking" element={<ParkingBooking user={user} />} />
               <Route path="/bookings" element={<MyBookings />} />
               <Route path="/fines" element={<MyFines />} />
+              <Route path="/report" element={<ReportViolation />} />
             </Routes>
           </div>
         </main>

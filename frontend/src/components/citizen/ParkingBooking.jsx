@@ -38,38 +38,70 @@ export default function ParkingBooking({ user }) {
     return acc;
   }, {});
 
+  ['Zone D', 'Zone E', 'Zone F', 'VIP Zone', 'EV Charging'].forEach(z => {
+      if (!zonesMap[z]) zonesMap[z] = { id: z, name: z, pricePerHour: [50, 80, 100, 150, 200][Math.floor(Math.random()*5)], spots: [] };
+  });
+
   const zonesList = Object.values(zonesMap).sort((a,b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
   const activeZone = zonesMap[selectedZone];
 
-  // Organize real spots into lanes (groups of 10)
+  // Massive robust top-down parking layout enforcing multiple lanes
   const parkingLanes = useMemo(() => {
     if (!activeZone) return [];
     
-    const sorted = [...activeZone.spots].sort((a, b) => a.spotId.localeCompare(b.spotId));
-    const lanes = [];
-    const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+    // Sort and store real db slots
+    const realSpots = [...activeZone.spots].sort((a, b) => a.spotId.localeCompare(b.spotId));
     
-    for (let i = 0; i < sorted.length; i += 10) {
-      const lIdx = Math.floor(i / 10);
-      const letter = letters[lIdx] || String.fromCharCode(65 + lIdx);
+    const lanes = [];
+    const numLanes = 12; // A through L
+    const spotsPerLane = 14; 
+    
+    // Create base 12 massive lanes (168 slots total per zone)
+    for (let lIdx = 0; lIdx < numLanes; lIdx++) {
+      const letter = String.fromCharCode(65 + lIdx); // A, B, C...
       const lane = { id: `Lane ${letter}`, label: `LANE ${letter}`, spots: [] };
-      
-      const chunk = sorted.slice(i, i + 10);
-      chunk.forEach((spot, j) => {
-        const finalStatus = localBookings.includes(spot.spotId) ? 'occupied' : spot.status;
-        lane.spots.push({
-          ...spot,
-          status: finalStatus,
-          isReal: true,
-          displayNum: `${letter}${String(j + 1).padStart(2, '0')}`
-        });
-      });
-      
+      for (let s = 1; s <= spotsPerLane; s++) {
+          const fakeId = `fake-${lIdx}-${s}`;
+          // Deterministic ambient layout of 'occupied/available' randomly distributed 
+          const isFakeOccupied = ((lIdx * 7) + (s * 3)) % 10 > 5;
+          const status = localBookings.includes(fakeId) ? 'occupied' : (isFakeOccupied ? 'occupied' : 'available');
+          
+          lane.spots.push({ 
+            spotId: fakeId, 
+            status: status, 
+            isReal: false, 
+            displayNum: `${letter}${String(s).padStart(2, '0')}`,
+            pricePerHour: activeZone.pricePerHour
+          });
+      }
       lanes.push(lane);
     }
     
+    // Transparently embed reality-backed database slots into the layout sequentially
+    if (realSpots.length > 0) {
+        // Distribute real spots nicely across the first few lanes
+        let curr = 0;
+        const totalSimulatedSlots = numLanes * spotsPerLane;
+        for (const rs of realSpots) {
+           if (curr >= totalSimulatedSlots) break;
+           const lIdx = Math.floor(curr / spotsPerLane);
+           const sIdx = curr % spotsPerLane;
+           
+           const letter = String.fromCharCode(65 + lIdx);
+           const finalStatus = localBookings.includes(rs.spotId) ? 'occupied' : rs.status;
+           
+           lanes[lIdx].spots[sIdx] = { 
+               ...rs, 
+               status: finalStatus,
+               isReal: true, 
+               displayNum: `${letter}${String(sIdx + 1).padStart(2, '0')}` 
+           };
+           curr++;
+        }
+    }
+    
     return lanes;
-  }, [selectedZone, spots, localBookings]);
+  }, [selectedZone, spots, localBookings, activeZone]);
 
   const handleBook = async () => {
     if (!selectedSpot) return;

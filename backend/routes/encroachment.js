@@ -218,4 +218,28 @@ router.put('/:id/ignore', authMiddleware, adminOnly, async (req, res) => {
   }
 });
 
+router.post('/citizen-report', authMiddleware, async (req, res) => {
+  try {
+    const row = {
+      cameraId: 'CITIZEN-APP',
+      location: req.body.location,
+      zone: 'footpath',
+      detectedObject: req.body.vehicleNumber ? 'vehicle' : 'hawker',
+      licensePlate: req.body.vehicleNumber || null,
+      imageUrl: req.body.imageUrl || '/images/encroachment/hawker1.jpg',
+      detectionTime: new Date(),
+      status: 'detected',
+      stationaryDuration: 0,
+      warningIssuedAt: null,
+      alertSentAt: null,
+      severity: 'high',
+      notes: `Citizen Report: ${req.body.description || ''}`
+    };
+    const created = await Encroachment.create(row);
+    res.json(withPublicId(created.toObject()));
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 export default router;

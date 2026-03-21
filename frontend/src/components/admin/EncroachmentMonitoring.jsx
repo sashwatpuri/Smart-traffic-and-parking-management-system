@@ -15,7 +15,7 @@ export default function EncroachmentMonitoring() {
 
   const fetchEncroachments = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/encroachments', {
+      const response = await fetch('http://localhost:5000/api/encroachments', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -35,7 +35,7 @@ export default function EncroachmentMonitoring() {
 
   const handleResolve = async (id) => {
     try {
-      await fetch(`http://localhost:5001/api/encroachments/${id}/resolve`, {
+      await fetch(`http://localhost:5000/api/encroachments/${id}/resolve`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -50,7 +50,7 @@ export default function EncroachmentMonitoring() {
 
   const handleIgnore = async (id) => {
     try {
-      await fetch(`http://localhost:5001/api/encroachments/${id}/ignore`, {
+      await fetch(`http://localhost:5000/api/encroachments/${id}/ignore`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,

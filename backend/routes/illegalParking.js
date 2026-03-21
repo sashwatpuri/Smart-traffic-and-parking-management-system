@@ -228,4 +228,29 @@ router.put('/:id/dismiss', authMiddleware, adminOnly, async (req, res) => {
   }
 });
 
+router.post('/citizen-report', authMiddleware, async (req, res) => {
+  try {
+    const row = {
+      licensePlate: req.body.vehicleNumber || 'UNKNOWN',
+      location: req.body.location,
+      violationType: 'illegal_parking',
+      fineAmount: 1200,
+      imageUrl: req.body.imageUrl || '/images/illegal-parking/parking1.jpg',
+      detectionTime: new Date(),
+      status: 'detected',
+      authority: 'Citizen Report',
+      cameraId: 'CITIZEN-APP',
+      confidence: 100,
+      alertSent: false,
+      finePaid: false,
+      notes: req.body.description || ''
+    };
+    const created = await IllegalParking.create(row);
+    io.emit('illegal-parking-detected', toPublic(created.toObject()));
+    res.json(toPublic(created.toObject()));
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 export default router;
