@@ -6,20 +6,20 @@ export default function TrafficMonitoring() {
 
   // Alerts State
   const [alerts, setAlerts] = useState([
-    { id: 1, type: 'violation', title: 'Violation: Illegal U-Turn detected', location: 'Station Road', time: 'Just now', colorHex: '#EF4444', bgClass: 'bg-red-100', textClass: 'text-[#EF4444]' },
-    { id: 2, type: 'warning', title: 'Congestion Warning: Heavy backlog building', location: 'Market Central', time: '4 mins ago', colorHex: '#F59E0B', bgClass: 'bg-amber-100', textClass: 'text-[#F59E0B]' }
+    { id: 1, type: 'violation', title: 'Violation: Illegal U-Turn detected', location: 'Oasis Mall Area', time: 'Just now', colorHex: '#EF4444', bgClass: 'bg-red-100', textClass: 'text-[#EF4444]' },
+    { id: 2, type: 'warning', title: 'Congestion Warning: Heavy backlog building', location: 'Park Shopping Complex - City Corner', time: '4 mins ago', colorHex: '#F59E0B', bgClass: 'bg-amber-100', textClass: 'text-[#F59E0B]' }
   ]);
 
   // States of each zone
   const [zones, setZones] = useState([
-    { id: 1, name: 'Zone 1: Station Road', vehicles: 342, congestion: 'LOW', signal: 'Green', timer: 45, cam: 'CAM-STN-001', videoUrl: '/videos/Hikvision_Traffic_Flow_Analysis_Camera_240P.mp4' },
-    { id: 2, name: 'Zone 2: Market Central', vehicles: 890, congestion: 'MEDIUM', signal: 'Red', timer: 15, cam: 'CAM-MKT-002', videoUrl: '/videos/Vehicle Detection and Traffic Counting using AI..mp4' },
-    { id: 3, name: 'Zone 3: Vijapur Road', vehicles: 756, congestion: 'MEDIUM', signal: 'Red', timer: 60, cam: 'CAM-VJP-003', videoUrl: '/videos/video_2.mp4' },
-    { id: 4, name: 'Zone 4: Highway Junction', vehicles: 1204, congestion: 'HIGH', signal: 'Green', timer: 30, cam: 'CAM-HWY-004', videoUrl: '/videos/video_3.mp4' },
-    { id: 5, name: 'Zone 5: Civil Hospital', vehicles: 210, congestion: 'LOW', signal: 'Red', timer: 25, cam: 'CAM-CVL-005', videoUrl: '/videos/video_4.mp4' },
-    { id: 6, name: 'Zone 6: Main Square', vehicles: 950, congestion: 'HIGH', signal: 'Yellow', timer: 5, cam: 'CAM-SQR-006' },
-    { id: 7, name: 'Zone 7: IT Park Rd', vehicles: 640, congestion: 'MEDIUM', signal: 'Green', timer: 50, cam: 'CAM-ITP-007' },
-    { id: 8, name: 'Zone 8: South Bypass', vehicles: 112, congestion: 'LOW', signal: 'Green', timer: 10, cam: 'CAM-BPS-008' }
+    { id: 1, name: 'Oasis Mall Area', latitude: 17.676673, longitude: 75.8986813, vehicles: 342, congestion: 'LOW', signal: 'Green', timer: 45, cam: 'CAM-STN-001', videoUrl: '/videos/Hikvision_Traffic_Flow_Analysis_Camera_240P.mp4' },
+    { id: 2, name: 'Park Shopping Complex - City Corner', latitude: 17.6796, longitude: 75.9088, vehicles: 890, congestion: 'MEDIUM', signal: 'Red', timer: 15, cam: 'CAM-MKT-002', videoUrl: '/videos/Vehicle Detection and Traffic Counting using AI..mp4' },
+    { id: 3, name: 'Virat Mall - Hotgi Road', latitude: 17.6710335, longitude: 75.9418596, vehicles: 756, congestion: 'MEDIUM', signal: 'Red', timer: 60, cam: 'CAM-VJP-003', videoUrl: '/videos/video_2.mp4' },
+    { id: 4, name: 'City Pride - GMR Mall Area', latitude: 17.6743, longitude: 75.9138, vehicles: 1204, congestion: 'HIGH', signal: 'Green', timer: 30, cam: 'CAM-HWY-004', videoUrl: '/videos/video_3.mp4' },
+    { id: 5, name: 'Soham Mall - Hospital Stretch', latitude: 17.6644158, longitude: 75.9126046, vehicles: 210, congestion: 'LOW', signal: 'Red', timer: 25, cam: 'CAM-CVL-005', videoUrl: '/videos/video_4.mp4' },
+    { id: 6, name: 'Bhuikot Fort - Siddheshwar Area', latitude: 17.6744887, longitude: 75.9021219, vehicles: 950, congestion: 'HIGH', signal: 'Yellow', timer: 5, cam: 'CAM-SQR-006' },
+    { id: 7, name: 'Solapur Cancer Center Junction', latitude: 17.656601, longitude: 75.896723, vehicles: 640, congestion: 'MEDIUM', signal: 'Green', timer: 50, cam: 'CAM-ITP-007' },
+    { id: 8, name: 'Bharat Mata Nagar - Gangji Mill', latitude: 17.6284768, longitude: 75.9298602, vehicles: 112, congestion: 'LOW', signal: 'Green', timer: 10, cam: 'CAM-BPS-008' }
   ]);
 
   // Selected zone to display in the main monitor
@@ -85,6 +85,20 @@ export default function TrafficMonitoring() {
     if (targetColor === 'Red') return active ? 'bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.8)]' : 'bg-red-900/50';
     if (targetColor === 'Yellow') return active ? 'bg-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.8)]' : 'bg-yellow-900/50';
     if (targetColor === 'Green') return active ? 'bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.8)]' : 'bg-green-900/50';
+  };
+
+  const openZoneInMaps = (zone) => {
+    const mapsUrl = `https://www.google.com/maps?q=${zone.latitude},${zone.longitude}`;
+    window.open(mapsUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleZoneCardClick = (zone) => {
+    setSelectedZoneId(zone.id);
+  };
+
+  const handleZoneMapClick = (event, zone) => {
+    event.stopPropagation();
+    openZoneInMaps(zone);
   };
 
   return (
@@ -291,11 +305,14 @@ export default function TrafficMonitoring() {
         {zones.map((zone) => (
           <div 
             key={zone.id} 
-            onClick={() => setSelectedZoneId(zone.id)}
-            className={`bg-white p-5 rounded-lg shadow-sm border flex flex-col justify-between cursor-pointer transition-all hover:shadow-md ${selectedZoneId === zone.id ? 'ring-2 ring-blue-500 border-transparent' : 'border-gray-100 hover:border-blue-200'}`}
+            onClick={() => handleZoneCardClick(zone)}
+            className={`bg-white p-5 rounded-lg shadow-sm border flex flex-col justify-between cursor-pointer transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 hover:ring-1 hover:ring-blue-300 ${selectedZoneId === zone.id ? 'ring-2 ring-blue-500 border-transparent' : 'border-gray-100 hover:border-blue-200'}`}
           >
             <div className="flex justify-between items-start mb-6">
-               <h4 className="font-bold text-[#0F172A] text-lg">Zone {zone.id}</h4>
+               <div>
+                 <h4 className="font-bold text-[#0F172A] text-base leading-tight">{zone.name}</h4>
+                 <p className="text-xs text-gray-400 mt-1">Zone ID: {zone.id}</p>
+               </div>
                <span className={`px-2 py-1 rounded text-xs font-bold tracking-wider border ${getCongestionColor(zone.congestion)}`}>
                  {zone.congestion}
                </span>
@@ -304,6 +321,13 @@ export default function TrafficMonitoring() {
                <div className="flex flex-col">
                  <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">Vehicles</span>
                  <span className="text-3xl font-bold text-[#0F172A] tabular-nums mt-1">{zone.vehicles}</span>
+                 <button
+                   type="button"
+                   onClick={(event) => handleZoneMapClick(event, zone)}
+                   className="text-[11px] text-blue-600 font-semibold mt-2 underline underline-offset-2 text-left hover:text-blue-700 cursor-pointer"
+                 >
+                   Click here to view actual view in map
+                 </button>
                </div>
                
                {/* Live Signal Indicator */}

@@ -20,37 +20,45 @@ export default function IllegalParkingDetection() {
 
   const fetchViolations = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/illegal-parking', {
+      const response = await fetch('http://localhost:5001/api/illegal-parking', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch violations (${response.status})`);
+      }
       const data = await response.json();
-      setViolations(data);
+      setViolations(Array.isArray(data) ? data : []);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching violations:', error);
+      setViolations([]);
       setLoading(false);
     }
   };
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/illegal-parking/stats/summary', {
+      const response = await fetch('http://localhost:5001/api/illegal-parking/stats/summary', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch stats (${response.status})`);
+      }
       const data = await response.json();
-      setStats(data);
+      setStats(data || {});
     } catch (error) {
       console.error('Error fetching stats:', error);
+      setStats({});
     }
   };
 
   const handleSendAlert = async (id) => {
     try {
-      await fetch(`http://localhost:5000/api/illegal-parking/${id}/send-alert`, {
+      await fetch(`http://localhost:5001/api/illegal-parking/${id}/send-alert`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -65,7 +73,7 @@ export default function IllegalParkingDetection() {
 
   const handleIssueFine = async (id) => {
     try {
-      await fetch(`http://localhost:5000/api/illegal-parking/${id}/issue-fine`, {
+      await fetch(`http://localhost:5001/api/illegal-parking/${id}/issue-fine`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -81,7 +89,7 @@ export default function IllegalParkingDetection() {
 
   const handleDismiss = async (id) => {
     try {
-      await fetch(`http://localhost:5000/api/illegal-parking/${id}/dismiss`, {
+      await fetch(`http://localhost:5001/api/illegal-parking/${id}/dismiss`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -214,8 +222,10 @@ export default function IllegalParkingDetection() {
             <p className="text-gray-500">No violations found</p>
           </div>
         ) : (
-          filteredViolations.map((violation) => (
-            <div key={violation.id} className="bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow overflow-hidden">
+          filteredViolations.map((violation) => {
+            const violationId = violation.id || violation._id;
+            return (
+            <div key={violationId} className="bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow overflow-hidden">
               <div className="flex flex-col md:flex-row">
                 {/* Image Section */}
                 <div className="md:w-1/3 relative bg-gray-100">
@@ -291,7 +301,7 @@ export default function IllegalParkingDetection() {
                       <div className="flex md:flex-col gap-2">
                         {violation.status === 'detected' && !violation.alertSent && (
                           <button
-                            onClick={() => handleSendAlert(violation.id)}
+                            onClick={() => handleSendAlert(violationId)}
                             className="flex items-center justify-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
                           >
                             <Bell className="w-4 h-4 mr-2" />
@@ -300,7 +310,7 @@ export default function IllegalParkingDetection() {
                         )}
                         {(violation.status === 'alert-sent' || violation.alertSent) && (
                           <button
-                            onClick={() => handleIssueFine(violation.id)}
+                            onClick={() => handleIssueFine(violationId)}
                             className="flex items-center justify-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                           >
                             <FileText className="w-4 h-4 mr-2" />
@@ -308,7 +318,7 @@ export default function IllegalParkingDetection() {
                           </button>
                         )}
                         <button
-                          onClick={() => handleDismiss(violation.id)}
+                          onClick={() => handleDismiss(violationId)}
                           className="flex items-center justify-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
                         >
                           <XCircle className="w-4 h-4 mr-2" />
@@ -336,7 +346,8 @@ export default function IllegalParkingDetection() {
                 </div>
               </div>
             </div>
-          ))
+            );
+          })
         )}
       </div>
 

@@ -8,6 +8,8 @@ export default function EmergencyControl() {
 
   useEffect(() => {
     fetchEmergencies();
+    const interval = setInterval(fetchEmergencies, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchEmergencies = async () => {
@@ -16,9 +18,10 @@ export default function EmergencyControl() {
       const { data } = await axios.get('/api/emergency', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setEmergencies(data);
+      setEmergencies(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching emergencies:', error);
+      setEmergencies([]);
     }
   };
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, AlertTriangle, MapPin, Clock, CheckCircle, XCircle, Eye } from 'lucide-react';
+import { Camera, AlertTriangle, MapPin, Clock, CheckCircle, XCircle } from 'lucide-react';
 
 export default function EncroachmentMonitoring() {
   const [encroachments, setEncroachments] = useState([]);
@@ -15,23 +15,27 @@ export default function EncroachmentMonitoring() {
 
   const fetchEncroachments = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/encroachments', {
+      const response = await fetch('http://localhost:5001/api/encroachments', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch encroachments (${response.status})`);
+      }
       const data = await response.json();
-      setEncroachments(data);
+      setEncroachments(Array.isArray(data) ? data : []);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching encroachments:', error);
+      setEncroachments([]);
       setLoading(false);
     }
   };
 
   const handleResolve = async (id) => {
     try {
-      await fetch(`http://localhost:5000/api/encroachments/${id}/resolve`, {
+      await fetch(`http://localhost:5001/api/encroachments/${id}/resolve`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -46,7 +50,7 @@ export default function EncroachmentMonitoring() {
 
   const handleIgnore = async (id) => {
     try {
-      await fetch(`http://localhost:5000/api/encroachments/${id}/ignore`, {
+      await fetch(`http://localhost:5001/api/encroachments/${id}/ignore`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -187,8 +191,10 @@ export default function EncroachmentMonitoring() {
             <p className="text-gray-500">No encroachments found</p>
           </div>
         ) : (
-          filteredEncroachments.map((enc) => (
-            <div key={enc.id} className="bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow overflow-hidden">
+          filteredEncroachments.map((enc) => {
+            const encId = enc.id || enc._id;
+            return (
+            <div key={encId} className="bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow overflow-hidden">
               <div className="flex flex-col md:flex-row">
                 {/* Camera Feed Image */}
                 <div className="md:w-1/3 relative">
@@ -254,14 +260,14 @@ export default function EncroachmentMonitoring() {
                     {['detected', 'warning-issued', 'alert-sent'].includes(enc.status) && (
                       <div className="flex md:flex-col gap-2">
                         <button
-                          onClick={() => handleResolve(enc.id)}
+                          onClick={() => handleResolve(encId)}
                           className="flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                         >
                           <CheckCircle className="w-4 h-4 mr-2" />
                           Resolve
                         </button>
                         <button
-                          onClick={() => handleIgnore(enc.id)}
+                          onClick={() => handleIgnore(encId)}
                           className="flex items-center justify-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
                         >
                           <XCircle className="w-4 h-4 mr-2" />
@@ -273,7 +279,8 @@ export default function EncroachmentMonitoring() {
                 </div>
               </div>
             </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

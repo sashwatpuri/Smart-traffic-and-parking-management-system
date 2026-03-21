@@ -8,6 +8,8 @@ import trafficRoutes from './routes/traffic.js';
 import parkingRoutes from './routes/parking.js';
 import fineRoutes from './routes/fines.js';
 import emergencyRoutes from './routes/emergency.js';
+import encroachmentRoutes from './routes/encroachment.js';
+import illegalParkingRoutes from './routes/illegalParking.js';
 import paymentRoutes, { razorpayWebhookHandler } from './routes/payments.js';
 import auditRoutes from './routes/audit.js';
 import { initializeTrafficSimulation } from './services/trafficSimulator.js';
@@ -68,6 +70,8 @@ app.use('/api/traffic', trafficRoutes);
 app.use('/api/parking', parkingRoutes);
 app.use('/api/fines', fineRoutes);
 app.use('/api/emergency', emergencyRoutes);
+app.use('/api/encroachments', encroachmentRoutes);
+app.use('/api/illegal-parking', illegalParkingRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/audit', auditRoutes);
 
