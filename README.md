@@ -40,14 +40,14 @@ A localized, easily accessible hub for citizens to engage with their municipalit
 
 ### 1. Admin System Autonomy
 <p align="center">
-  <img src="https://via.placeholder.com/800x450.png?text=Upload+Admin+Dashboard+Video+Recording+Here" alt="Admin Dashboard Video" width="800"/>
+  <video src="docs/videos/admin_walkthrough.mp4" width="800" controls></video>
   <br/>
   <em>Automated authentication sequence parsing Live Security Camera Feeds natively alongside robust AI Parking Detection rendering algorithms.</em>
 </p>
 
 ### 2. Citizen Interface Scale
 <p align="center">
-  <img src="https://via.placeholder.com/800x450.png?text=Upload+Citizen+Portal+Video+Recording+Here" alt="Citizen Portal Actions" width="800"/>
+  <video src="docs/videos/citizen_walkthrough.mp4" width="800" controls></video>
   <br/>
   <em>Interactive evaluation of dynamically allocated 168-slot parking structures securely switching map zones to finalize comprehensive civic reporting submissions.</em>
 </p>
