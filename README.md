@@ -126,4 +126,26 @@ Every violation reported securely from the frontend `ReportViolation.jsx` form i
 
 ---
 
+## 📂 Documentation
+
+For more detailed information on specific features and setup, please refer to the following guides:
+
+- **[System Architecture](docs/ARCHITECTURE.md)**: Detailed overview of the system design and data flow.
+- **[Feature Guides](docs/guides/)**: Detailed instructions for Illegal Parking and Encroachment monitoring.
+- **[Encroachment Flow](docs/guides/ENCROACHMENT_FLOW.md)**: Deep dive into the encroachment detection logic.
+- **[Setup & Installation](docs/setup/)**: Step-by-step guides for environment configuration.
+- **[Project History](docs/changes.md)**: Log of changes and updates during development.
+
+---
+
+## 🤝 Contributing
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
 > Hand-crafted layout components built specially for robust municipal oversight!
