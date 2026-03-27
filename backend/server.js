@@ -12,6 +12,7 @@ import encroachmentRoutes from './routes/encroachment.js';
 import illegalParkingRoutes from './routes/illegalParking.js';
 import paymentRoutes, { razorpayWebhookHandler } from './routes/payments.js';
 import auditRoutes from './routes/audit.js';
+import roadIssueRoutes from './routes/roadIssues.js';
 import { initializeTrafficSimulation } from './services/trafficSimulator.js';
 import User from './models/User.js';
 import { env } from './config/env.js';
@@ -74,6 +75,7 @@ app.use('/api/encroachments', encroachmentRoutes);
 app.use('/api/illegal-parking', illegalParkingRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/audit', auditRoutes);
+app.use('/api/road-issues', roadIssueRoutes);
 
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);

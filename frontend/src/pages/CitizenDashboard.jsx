@@ -1,10 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
-import { ParkingCircle, CreditCard, AlertCircle, LogOut, User, Menu, X, Camera } from 'lucide-react';
 import ParkingBooking from '../components/citizen/ParkingBooking';
 import MyBookings from '../components/citizen/MyBookings';
 import MyFines from '../components/citizen/MyFines';
 import ReportViolation from '../components/citizen/ReportViolation';
+import ReportRoadIssue from '../components/citizen/ReportRoadIssue';
+import { 
+  ParkingCircle, 
+  CreditCard, 
+  AlertCircle, 
+  LogOut, 
+  User, 
+  Menu, 
+  X, 
+  Camera,
+  Construction 
+} from 'lucide-react';
 
 export default function CitizenDashboard({ user, onLogout }) {
   const location = useLocation();
@@ -18,9 +29,10 @@ export default function CitizenDashboard({ user, onLogout }) {
 
   const tabs = [
     { id: 'parking', label: 'Book Parking', icon: ParkingCircle, path: '/citizen/parking', color: 'blue' },
-    { id: 'bookings', label: 'My Bookings', icon: User, path: '/citizen/bookings', color: 'green' },
-    { id: 'fines', label: 'My Fines', icon: AlertCircle, path: '/citizen/fines', color: 'orange' },
-    { id: 'report', label: 'Report Violation', icon: Camera, path: '/citizen/report', color: 'red' }
+    { id: 'bookings', label: 'My Bookings', icon: User, path: '/citizen/bookings' },
+    { id: 'fines', label: 'My Fines', icon: AlertCircle, path: '/citizen/fines' },
+    { id: 'report', label: 'Report Violation', icon: Camera, path: '/citizen/report' },
+    { id: 'road-issue', label: 'Road Issue', icon: Construction, path: '/citizen/road-issue' }
   ];
 
   const getColorClasses = (color, isActive) => {
@@ -121,6 +133,7 @@ export default function CitizenDashboard({ user, onLogout }) {
               <Route path="/bookings" element={<MyBookings />} />
               <Route path="/fines" element={<MyFines />} />
               <Route path="/report" element={<ReportViolation />} />
+              <Route path="/road-issue" element={<ReportRoadIssue />} />
             </Routes>
           </div>
         </main>
