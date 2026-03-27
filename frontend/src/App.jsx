@@ -7,62 +7,6 @@ import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
 import CitizenDashboard from './pages/CitizenDashboard';
 
-let refreshRequest = null;
-let onAuthFailure = null;
-
-// Move interceptors outside to ensure they are attached BEFORE any component mounts
-axios.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers = config.headers || {};
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-axios.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-    const refreshToken = localStorage.getItem('refreshToken');
-    const isUnauthorized = error.response?.status === 401;
-    const isRefreshCall = originalRequest?.url?.includes('/api/auth/refresh');
-
-    if (!isUnauthorized || !refreshToken || isRefreshCall || originalRequest?._retry) {
-      // If it's a 401 and we can't refresh, trigger the global logout handler
-      if (isUnauthorized && !isRefreshCall && onAuthFailure) {
-        onAuthFailure();
-      }
-      return Promise.reject(error);
-    }
-
-    originalRequest._retry = true;
-
-    try {
-      if (!refreshRequest) {
-        refreshRequest = axios.post('/api/auth/refresh', { refreshToken });
-      }
-      const { data } = await refreshRequest;
-      refreshRequest = null;
-
-      const newToken = data.accessToken || data.token;
-      localStorage.setItem('token', newToken);
-      if (data.refreshToken) {
-        localStorage.setItem('refreshToken', data.refreshToken);
-      }
-
-      originalRequest.headers = originalRequest.headers || {};
-      originalRequest.headers.Authorization = `Bearer ${newToken}`;
-      return axios(originalRequest);
-    } catch (refreshError) {
-      refreshRequest = null;
-      if (onAuthFailure) {
-        onAuthFailure();
-      }
-      return Promise.reject(refreshError);
-    }
-  }
-);
 
 function App() {
   const [user, setUser] = useState(null);
@@ -75,18 +19,7 @@ function App() {
     }
   }, []);
 
-  useEffect(() => {
-    onAuthFailure = () => {
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
-      setUser(null);
-    };
 
-    return () => {
-      onAuthFailure = null;
-    };
-  }, []);
 
   useEffect(() => {
     const socket = io('http://localhost:5000', {
