@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { 
@@ -23,6 +24,18 @@ export default function RoadNews() {
 
   useEffect(() => {
     fetchIssues();
+    
+    // Connect to local socket
+    const socket = io('http://localhost:5000');
+    
+    // Listen for new road issues in real-time
+    socket.on('new-road-issue', () => {
+       fetchIssues();
+    });
+
+    return () => {
+       socket.disconnect();
+    };
   }, []);
 
   const fetchIssues = async () => {

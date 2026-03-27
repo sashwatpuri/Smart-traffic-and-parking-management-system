@@ -72,8 +72,11 @@ export default function ReportRoadIssue() {
     const file = e.target.files[0];
     if (file) {
       setPhoto(file);
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
