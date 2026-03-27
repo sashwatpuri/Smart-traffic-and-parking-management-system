@@ -348,16 +348,24 @@ export default function ParkingBooking({ user }) {
 
                                  {/* Occupied indicator - Solid RED block in center representing car */}
                                  {isOccupied && (
-                                    <div className={`absolute w-10/12 h-4/5 rounded bg-red-500 flex items-center justify-center shadow-[inset_0_2px_10px_rgba(0,0,0,0.3)] ${isTopFacingDown ? 'top-3' : 'bottom-3'}`}>
-                                       <svg className="w-6 h-6 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                    </div>
+                                     <div className={`absolute w-10/12 h-4/5 rounded bg-red-500 flex items-center justify-center shadow-[inset_0_2px_10px_rgba(0,0,0,0.3)] ${isTopFacingDown ? 'top-3' : 'bottom-3'}`}>
+                                        {vehicleType === '2-wheeler' ? (
+                                           <svg className="w-6 h-6 text-white/80" fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 5.5l.5-.5c.8-.8 1.5-1 2-1s1.2.2 2 1 1 .5 1.5.5.9 0 1.5-.5h.5c0 1.4-1.1 2.5-2.5 2.5s-1.8-.1-2.5-.5-1.1-.5-1.5-.5-.4 0-.8.3l-.7.7c-.1.1-.3.1-.4 0s-.1-.2 0-.4l.5-.6zM7 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm10 0c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm-8.8-7l-1.2-3h-2v1h1.4l1.2 3.1c-.4.4-.6.9-.6 1.4 0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2 0-.5-.2-1-.6-1.4L15.2 12H11.5l1.6-4h-2.1l-2.8 4z"/></svg>
+                                        ) : (
+                                           <svg className="w-6 h-6 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                        )}
+                                     </div>
                                  )}
 
                                  {/* Selected indicator - Solid GREEN block representing user's prospective car */}
                                  {isSelected && !isOccupied && (
-                                    <div className={`absolute w-10/12 h-4/5 rounded bg-white flex items-center justify-center shadow-lg animate-pulse ${isTopFacingDown ? 'top-3' : 'bottom-3'}`}>
-                                       <svg className="w-8 h-8 text-green-500 drop-shadow-md" fill="currentColor" viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
-                                    </div>
+                                     <div className={`absolute w-10/12 h-4/5 rounded bg-white flex items-center justify-center shadow-lg animate-pulse ${isTopFacingDown ? 'top-3' : 'bottom-3'}`}>
+                                        {vehicleType === '2-wheeler' ? (
+                                           <svg className="w-8 h-8 text-green-500 drop-shadow-md" fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 5.5l.5-.5c.8-.8 1.5-1 2-1s1.2.2 2 1 1 .5 1.5.5.9 0 1.5-.5h.5c0 1.4-1.1 2.5-2.5 2.5s-1.8-.1-2.5-.5-1.1-.5-1.5-.5-.4 0-.8.3l-.7.7c-.1.1-.3.1-.4 0s-.1-.2 0-.4l.5-.6zM7 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm10 0c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm-8.8-7l-1.2-3h-2v1h1.4l1.2 3.1c-.4.4-.6.9-.6 1.4 0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2 0-.5-.2-1-.6-1.4L15.2 12H11.5l1.6-4h-2.1l-2.8 4z"/></svg>
+                                        ) : (
+                                           <svg className="w-8 h-8 text-green-500 drop-shadow-md" fill="currentColor" viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
+                                        )}
+                                     </div>
                                  )}
 
                                </div>
