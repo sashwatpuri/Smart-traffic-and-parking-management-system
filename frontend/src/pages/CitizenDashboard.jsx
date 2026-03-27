@@ -5,6 +5,7 @@ import MyBookings from '../components/citizen/MyBookings';
 import MyFines from '../components/citizen/MyFines';
 import ReportViolation from '../components/citizen/ReportViolation';
 import ReportRoadIssue from '../components/citizen/ReportRoadIssue';
+import RoadNews from '../components/citizen/RoadNews';
 import { 
   ParkingCircle, 
   CreditCard, 
@@ -14,7 +15,8 @@ import {
   Menu, 
   X, 
   Camera,
-  Construction 
+  Construction,
+  Megaphone
 } from 'lucide-react';
 
 export default function CitizenDashboard({ user, onLogout }) {
@@ -32,7 +34,8 @@ export default function CitizenDashboard({ user, onLogout }) {
     { id: 'bookings', label: 'My Bookings', icon: User, path: '/citizen/bookings' },
     { id: 'fines', label: 'My Fines', icon: AlertCircle, path: '/citizen/fines' },
     { id: 'report', label: 'Report Violation', icon: Camera, path: '/citizen/report' },
-    { id: 'road-issue', label: 'Road Issue', icon: Construction, path: '/citizen/road-issue' }
+    { id: 'road-issue', label: 'Report Issue', icon: Construction, path: '/citizen/road-issue' },
+    { id: 'news', label: 'Road News', icon: Megaphone, path: '/citizen/news' }
   ];
 
   const getColorClasses = (color, isActive) => {
@@ -134,6 +137,7 @@ export default function CitizenDashboard({ user, onLogout }) {
               <Route path="/fines" element={<MyFines />} />
               <Route path="/report" element={<ReportViolation />} />
               <Route path="/road-issue" element={<ReportRoadIssue />} />
+              <Route path="/news" element={<RoadNews />} />
             </Routes>
           </div>
         </main>

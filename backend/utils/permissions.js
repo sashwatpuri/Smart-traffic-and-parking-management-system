@@ -16,10 +16,13 @@ export const PERMISSIONS_BY_ROLE = {
     'emergency:complete',
     'payment:create:any',
     'payment:view:any',
-    'audit:read'
+    'audit:read',
+    'road-issues:read',
+    'road-issues:write'
   ],
   citizen: [
     'traffic:read',
+    'road-issues:read',
     'parking:read',
     'parking:book',
     'parking:release:own',
