@@ -14,6 +14,7 @@ export default function ParkingBooking({ user }) {
   
   const [loading, setLoading] = useState(false);
   const [localBookings, setLocalBookings] = useState([]);
+  const [vehicleType, setVehicleType] = useState('4-wheeler');
 
   useEffect(() => {
     fetchSpots();
@@ -53,17 +54,21 @@ export default function ParkingBooking({ user }) {
     const realSpots = [...activeZone.spots].sort((a, b) => a.spotId.localeCompare(b.spotId));
     
     const lanes = [];
-    const numLanes = 12; // A through L
-    const spotsPerLane = 14; 
+    const is2W = vehicleType === '2-wheeler';
+    const numLanes = is2W ? 16 : 12; // More lanes for 2W as they are smaller
+    const spotsPerLane = is2W ? 24 : 14; 
     
-    // Create base 12 massive lanes (168 slots total per zone)
+    // Filter real db slots by current vehicle vehicleType
+    const filteredRealSpots = realSpots.filter(s => (s.vehicleCategory || '4-wheeler') === vehicleType);
+
+    // Create base massive lanes
     for (let lIdx = 0; lIdx < numLanes; lIdx++) {
-      const letter = String.fromCharCode(65 + lIdx); // A, B, C...
+      const letter = String.fromCharCode(65 + lIdx);
       const lane = { id: `Lane ${letter}`, label: `LANE ${letter}`, spots: [] };
       for (let s = 1; s <= spotsPerLane; s++) {
-          const fakeId = `fake-${lIdx}-${s}`;
-          // Deterministic ambient layout of 'occupied/available' randomly distributed 
-          const isFakeOccupied = ((lIdx * 7) + (s * 3)) % 10 > 5;
+          const fakeId = `fake-${vehicleType}-${lIdx}-${s}`;
+          // Deterministic ambient layout
+          const isFakeOccupied = ((lIdx * 7) + (s * 3)) % 10 > 7; // Fewer fake occupied for 2W maybe?
           const status = localBookings.includes(fakeId) ? 'occupied' : (isFakeOccupied ? 'occupied' : 'available');
           
           lane.spots.push({ 
@@ -71,18 +76,18 @@ export default function ParkingBooking({ user }) {
             status: status, 
             isReal: false, 
             displayNum: `${letter}${String(s).padStart(2, '0')}`,
-            pricePerHour: activeZone.pricePerHour
+            pricePerHour: is2W ? Math.floor(activeZone.pricePerHour * 0.5) : activeZone.pricePerHour,
+            vehicleCategory: vehicleType
           });
       }
       lanes.push(lane);
     }
     
-    // Transparently embed reality-backed database slots into the layout sequentially
-    if (realSpots.length > 0) {
-        // Distribute real spots nicely across the first few lanes
+    // Embed reality sequential
+    if (filteredRealSpots.length > 0) {
         let curr = 0;
         const totalSimulatedSlots = numLanes * spotsPerLane;
-        for (const rs of realSpots) {
+        for (const rs of filteredRealSpots) {
            if (curr >= totalSimulatedSlots) break;
            const lIdx = Math.floor(curr / spotsPerLane);
            const sIdx = curr % spotsPerLane;
@@ -101,7 +106,7 @@ export default function ParkingBooking({ user }) {
     }
     
     return lanes;
-  }, [selectedZone, spots, localBookings, activeZone]);
+  }, [selectedZone, spots, localBookings, activeZone, vehicleType]);
 
   const handleBook = async () => {
     if (!selectedSpot) return;
@@ -114,7 +119,8 @@ export default function ParkingBooking({ user }) {
           zone: activeZone.name,
           status: 'active',
           location: { name: activeZone.name },
-          pricePerHour: activeZone.pricePerHour || 100,
+          pricePerHour: selectedSpot.pricePerHour || 100,
+          vehicleCategory: selectedSpot.vehicleCategory,
           currentBooking: {
              vehicleNumber: user?.vehicleNumber || 'USER-MOCK',
              paymentStatus: 'paid',
@@ -190,6 +196,32 @@ export default function ParkingBooking({ user }) {
             {z.name}
           </button>
         ))}
+      </div>
+
+      {/* Vehicle Type Toggle */}
+      <div className="flex justify-center py-6 bg-white border-b border-gray-100 gap-4">
+         <button 
+            onClick={() => { setVehicleType('4-wheeler'); setSelectedSpot(null); }}
+            className={`flex items-center gap-3 px-8 py-3 rounded-2xl font-black text-sm transition-all ${
+               vehicleType === '4-wheeler' 
+               ? 'bg-[#0F172A] text-white shadow-xl scale-105' 
+               : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+            }`}
+         >
+            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
+            4 WHEELER
+         </button>
+         <button 
+            onClick={() => { setVehicleType('2-wheeler'); setSelectedSpot(null); }}
+            className={`flex items-center gap-3 px-8 py-3 rounded-2xl font-black text-sm transition-all ${
+               vehicleType === '2-wheeler' 
+               ? 'bg-[#10B981] text-white shadow-xl scale-105' 
+               : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+            }`}
+         >
+            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 5.5l.5-.5c.8-.8 1.5-1 2-1s1.2.2 2 1 1 .5 1.5.5.9 0 1.5-.5h.5c0 1.4-1.1 2.5-2.5 2.5s-1.8-.1-2.5-.5-1.1-.5-1.5-.5-.4 0-.8.3l-.7.7c-.1.1-.3.1-.4 0s-.1-.2 0-.4l.5-.6zM7 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm10 0c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm-8.8-7l-1.2-3h-2v1h1.4l1.2 3.1c-.4.4-.6.9-.6 1.4 0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2 0-.5-.2-1-.6-1.4L15.2 12H11.5l1.6-4h-2.1l-2.8 4z"/></svg>
+            2 WHEELER
+         </button>
       </div>
 
       {/* Main Layout containing Sidebar and Map */}
@@ -299,7 +331,7 @@ export default function ParkingBooking({ user }) {
                                <div 
                                  key={spot.spotId}
                                  onClick={() => !isOccupied && setSelectedSpot(spot)}
-                                 className={`w-14 h-24 sm:w-20 sm:h-32 flex items-center justify-center relative cursor-pointer font-bold text-xs sm:text-sm transition-all border-l-4 border-white ${sIdx === 9 ? 'border-r-4' : ''} 
+                                 className={`${vehicleType === '2-wheeler' ? 'w-10 h-16 sm:w-14 sm:h-20' : 'w-14 h-24 sm:w-20 sm:h-32'} flex items-center justify-center relative cursor-pointer font-bold text-xs sm:text-sm transition-all border-l-4 border-white ${sIdx === 9 ? 'border-r-4' : ''} 
                                    ${isTopFacingDown ? 'border-t-4' : 'border-b-4'}
                                    ${isOccupied 
                                      ? 'bg-red-500/20 cursor-not-allowed border-red-500/10'

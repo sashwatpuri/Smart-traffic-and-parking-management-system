@@ -111,10 +111,13 @@ export default function MyBookings() {
 
               <div className="pt-3 border-t">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Vehicle:</span>
-                  <span className="font-semibold">{booking.currentBooking.vehicleNumber}</span>
-                </div>
-                <div className="flex justify-between text-sm mt-1">
+                   <span className="font-semibold">{booking.currentBooking.vehicleNumber}</span>
+                 </div>
+                 <div className="flex justify-between text-sm mt-1">
+                   <span className="text-gray-600">Type:</span>
+                   <span className="font-semibold uppercase text-xs bg-gray-100 px-2 rounded-md">{booking.vehicleCategory || '4-wheeler'}</span>
+                 </div>
+                 <div className="flex justify-between text-sm mt-1">
                   <span className="text-gray-600">Rate:</span>
                   <span>₹{booking.pricePerHour}/hr</span>
                 </div>

@@ -37,6 +37,12 @@ const parkingSpotSchema = new mongoose.Schema(
       default: 'regular',
       index: true
     },
+    vehicleCategory: {
+      type: String,
+      enum: ['2-wheeler', '4-wheeler'],
+      default: '4-wheeler',
+      index: true
+    },
     floor: {
       type: Number,
       default: 0

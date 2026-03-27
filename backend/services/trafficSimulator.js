@@ -24,9 +24,9 @@ const PARKING_ZONES = [
 
 export async function initializeTrafficSimulation(io) {
   // ── Cleanup old letter-based zones/spots so they're recreated with number names ──
-  await ParkingZone.deleteMany({ zoneId: /^ZONE-[A-H]$/ });
-  await ParkingSpot.deleteMany({ zoneId: /^ZONE-[A-H]$/ });
-  console.log('🧹 Cleaned up old letter-based parking zones');
+  await ParkingZone.deleteMany({ zoneId: /^ZONE-/ });
+  await ParkingSpot.deleteMany({ zoneId: /^ZONE-/ });
+  console.log('🧹 Cleaned up ALL current parking data for fresh re-seed');
 
   // ── Initialize traffic signals ──────────────────────────────────────────────
   for (const intersection of INTERSECTIONS) {
@@ -102,8 +102,9 @@ export async function initializeTrafficSimulation(io) {
           },
           status: Math.random() > 0.3 ? 'available' : 'occupied',
           type,
+          vehicleCategory: i <= (zoneData.count * 0.4) ? '2-wheeler' : '4-wheeler',
           floor: Math.floor(i / 20),
-          pricePerHour: zoneData.pricePerHour,
+          pricePerHour: i <= (zoneData.count * 0.4) ? Math.floor(zoneData.pricePerHour * 0.5) : zoneData.pricePerHour,
           currency: 'INR',
           isActive: true
         });
