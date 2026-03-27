@@ -83,7 +83,7 @@ export default function MyFines() {
                         {fine.violationType}
                       </td>
                       <td className={`px-6 py-5 ${isPending ? 'text-gray-600' : 'text-gray-400'}`}>
-                        {fine.location}
+                        {fine.location?.name || fine.location?.address || 'N/A'}
                       </td>
                       <td className={`px-6 py-5 ${isPending ? 'text-gray-600' : 'text-gray-400'}`}>
                         {new Date(fine.issuedAt).toLocaleDateString()}
