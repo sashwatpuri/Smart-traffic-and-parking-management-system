@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
@@ -16,6 +17,17 @@ export default function MyFines() {
 
   useEffect(() => {
     fetchFines();
+
+    const socket = io('http://localhost:5000');
+    
+    // Listen for new fines that might belong to the current user
+    socket.on('new-fine', () => {
+       fetchFines();
+    });
+
+    return () => {
+       socket.disconnect();
+    };
   }, []);
 
   const handlePay = async (id) => {
@@ -34,81 +46,80 @@ export default function MyFines() {
 
   return (
     <div className="bg-[#F8FAFC] min-h-screen py-8 px-4 font-sans text-[#0F172A]">
-      <div className="max-w-[900px] mx-auto w-full">
+      <div className="max-w-[1100px] mx-auto w-full">
         
         {/* Page Heading */}
-        <h2 className="text-2xl font-bold text-[#0F172A] mb-6">My Fines & Violations</h2>
+        <h1 className="text-2xl font-black text-[#0F172A] mb-8 tracking-tight">My Fines & Violations</h1>
 
-        {/* Summary Card */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
+        {/* Summary High-Precision Card */}
+        <div className="bg-white rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-gray-100 p-8 flex flex-col md:flex-row items-center justify-between gap-6 mb-10">
           <div>
-            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Total Outstanding</p>
-            <h3 className="text-4xl font-bold text-[#EF4444] mt-1 tabular-nums">₹{totalOutstanding.toFixed(2)}</h3>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Total Outstanding</p>
+            <h3 className="text-5xl font-black text-[#EF4444] tabular-nums tracking-tighter">₹{totalOutstanding.toFixed(2)}</h3>
           </div>
-          {totalOutstanding > 0 && (
-            <button className="bg-[#0F172A] text-white px-8 py-3 rounded-md font-bold text-sm hover:bg-slate-800 transition-colors shadow-sm whitespace-nowrap">
-              Pay All Fines
-            </button>
-          )}
+          
+          <button className={`bg-[#0F172A] text-white px-10 py-4 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-95 ${totalOutstanding === 0 ? 'opacity-30 pointer-events-none' : ''}`}>
+             Pay All Fines
+          </button>
         </div>
 
-        {/* Fines Table Card */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        {/* Fines Table Container */}
+        <div className="bg-white rounded-3xl shadow-[0_1px_10px_-2px_rgba(0,0,0,0.05)] border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm whitespace-nowrap">
-              <thead className="bg-gray-50 border-b border-gray-200 text-gray-500 uppercase tracking-wider text-xs">
+              <thead className="bg-white border-b border-gray-100 text-[10px] font-black text-gray-400 uppercase tracking-[0.15em]">
                 <tr>
-                  <th className="px-6 py-4 font-medium">Fine ID</th>
-                  <th className="px-6 py-4 font-medium">Violation Type</th>
-                  <th className="px-6 py-4 font-medium">Location</th>
-                  <th className="px-6 py-4 font-medium">Date</th>
-                  <th className="px-6 py-4 font-medium">Amount</th>
-                  <th className="px-6 py-4 font-medium">Status</th>
-                  <th className="px-6 py-4 font-medium text-right">Action</th>
+                  <th className="px-8 py-6">Fine ID</th>
+                  <th className="px-8 py-6">Violation Type</th>
+                  <th className="px-8 py-6">Location</th>
+                  <th className="px-8 py-6">Date</th>
+                  <th className="px-8 py-6">Amount</th>
+                  <th className="px-8 py-6">Status</th>
+                  <th className="px-8 py-6 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-50">
                 {fines.map((fine) => {
                   const isPending = fine.status === 'pending';
                   
                   return (
                     <tr 
                       key={fine._id} 
-                      className={`transition-colors ${isPending ? 'bg-red-50/40 hover:bg-red-50/60' : 'bg-gray-50 hover:bg-gray-100'}`}
+                      className="hover:bg-gray-50/50 transition-colors"
                     >
-                      <td className={`px-6 py-5 font-semibold ${isPending ? 'text-[#0F172A]' : 'text-gray-500'}`}>
+                      <td className="px-8 py-6 font-bold text-gray-500 text-xs">
                         {fine.fineId}
                       </td>
-                      <td className={`px-6 py-5 ${isPending ? 'text-[#0F172A]' : 'text-gray-500'}`}>
-                        {fine.violationType}
+                      <td className="px-8 py-6 font-bold text-[#0F172A]">
+                         {fine.violationType.replace(/_/g, ' ')}
                       </td>
-                      <td className={`px-6 py-5 ${isPending ? 'text-gray-600' : 'text-gray-400'}`}>
+                      <td className="px-8 py-6 text-gray-500 font-medium">
                         {fine.location?.name || fine.location?.address || 'N/A'}
                       </td>
-                      <td className={`px-6 py-5 ${isPending ? 'text-gray-600' : 'text-gray-400'}`}>
-                        {new Date(fine.issuedAt).toLocaleDateString()}
+                      <td className="px-8 py-6 text-gray-500 font-medium whitespace-nowrap">
+                        {new Date(fine.issuedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
                       </td>
-                      <td className={`px-6 py-5 font-bold ${isPending ? 'text-[#0F172A]' : 'text-gray-400'} tabular-nums`}>
+                      <td className="px-8 py-6 font-black text-[#0F172A] tabular-nums">
                         ₹{fine.amount}
                       </td>
-                      <td className="px-6 py-5">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase ${
-                          isPending ? 'bg-red-100 text-[#EF4444]' : 'bg-green-100 text-[#10B981]'
+                      <td className="px-8 py-6">
+                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                          isPending 
+                          ? 'bg-red-50 text-red-500' 
+                          : 'bg-green-50 text-green-500'
                         }`}>
                           {fine.status}
                         </span>
                       </td>
-                      <td className="px-6 py-5 text-right">
+                      <td className="px-8 py-6 text-right">
                         {isPending ? (
                           <button 
                             onClick={() => handlePay(fine._id)}
-                            className="bg-[#F59E0B] text-white px-4 py-1.5 rounded-md font-semibold text-sm hover:bg-amber-600 transition-colors shadow-sm">
-                            Pay Now
+                            className="text-[#F59E0B] font-black text-[10px] uppercase tracking-widest hover:text-amber-600 underline underline-offset-4 decoration-2">
+                             Pay Now
                           </button>
                         ) : (
-                          <button className="border border-gray-300 text-gray-500 px-4 py-1.5 rounded-md font-semibold text-sm hover:bg-gray-200 transition-colors">
-                            Receipt
-                          </button>
+                          <span className="text-gray-300 font-black text-[10px] uppercase tracking-widest italic">Cleared</span>
                         )}
                       </td>
                     </tr>
@@ -116,8 +127,8 @@ export default function MyFines() {
                 })}
                 {fines.length === 0 && (
                   <tr>
-                    <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
-                      No fines found.
+                    <td colSpan="7" className="px-8 py-20 text-center flex-col">
+                      <div className="text-gray-300 font-black text-xs uppercase tracking-[0.2em]">No fines found.</div>
                     </td>
                   </tr>
                 )}

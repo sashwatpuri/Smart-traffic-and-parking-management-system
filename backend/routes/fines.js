@@ -1,6 +1,7 @@
 import express from 'express';
 import Fine from '../models/Fine.js';
 import User from '../models/User.js';
+import { io } from '../server.js';
 import { authMiddleware, requirePermission } from '../middleware/auth.js';
 import { env } from '../config/env.js';
 import { logAudit } from '../services/auditLogger.js';
@@ -10,7 +11,24 @@ const router = express.Router();
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const canReadAll = req.user.permissions?.includes('fine:read');
-    const filter = canReadAll ? {} : { userId: req.user.userId };
+    let filter = {};
+    
+    if (!canReadAll) {
+      // For citizens, find fines matching their userId OR their vehicleNumber
+      const user = await User.findById(req.user.userId);
+      filter = {
+        $or: [
+          { userId: req.user.userId },
+          { vehicleNumber: user?.vehicleNumber }
+        ]
+      };
+      
+      // If user has no vehicle number, just use userId
+      if (!user?.vehicleNumber) {
+        filter = { userId: req.user.userId };
+      }
+    }
+
     const fines = await Fine.find(filter).populate('userId', 'name email').sort({ issuedAt: -1 });
     res.json(fines);
   } catch (error) {
@@ -20,14 +38,18 @@ router.get('/', authMiddleware, async (req, res) => {
 
 router.post('/issue', authMiddleware, requirePermission('fine:issue'), async (req, res) => {
   try {
-    const { vehicleNumber, violationType, amount, location, imageUrl } = req.body;
-    const owner = await User.findOne({ vehicleNumber });
+    let { vehicleNumber, violationType, amount, location, imageUrl } = req.body;
+    
+    // Normalize vehicle number (uppercase, no spaces/dashes)
+    const normalizedNumber = vehicleNumber ? vehicleNumber.replace(/[^A-Z0-9]/gi, '').toUpperCase() : '';
+    
+    const owner = await User.findOne({ vehicleNumber: normalizedNumber });
 
     const fineId = `FINE${Date.now()}`;
     const fine = new Fine({
       fineId,
       userId: owner?._id,
-      vehicleNumber,
+      vehicleNumber: normalizedNumber || vehicleNumber,
       violationType,
       amount,
       currency: 'INR',
@@ -38,6 +60,13 @@ router.post('/issue', authMiddleware, requirePermission('fine:issue'), async (re
     });
 
     await fine.save();
+
+    // Notify citizen in real-time
+    io.emit('new-fine', {
+        userId: owner?._id,
+        vehicleNumber: normalizedNumber,
+        fineId: fine.fineId
+    });
 
     await logAudit({
       req,
