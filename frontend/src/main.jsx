@@ -25,6 +25,12 @@ axios.interceptors.response.use(
     const isRefreshCall = originalRequest?.url?.includes('/api/auth/refresh');
 
     if (!isUnauthorized || !refreshToken || isRefreshCall || originalRequest?._retry) {
+      if (isUnauthorized && !isRefreshCall && !originalRequest?._retry) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
       return Promise.reject(error);
     }
 
