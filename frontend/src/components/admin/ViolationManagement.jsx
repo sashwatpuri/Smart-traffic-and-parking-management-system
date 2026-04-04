@@ -142,7 +142,7 @@ export default function ViolationManagement() {
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
         <div className="relative z-10">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h2 className="text-3xl font-bold mb-2 flex items-center">
                 <Camera className="w-8 h-8 mr-3 animate-pulse" />
@@ -162,7 +162,7 @@ export default function ViolationManagement() {
       </div>
 
       {/* Violation Types Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {violationTypes.map((violation) => (
           <div key={violation.id} className="bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all transform hover:scale-105 border-2 border-gray-100">
             <div className={`w-12 h-12 bg-gradient-to-br ${getViolationColor(violation.id)} rounded-xl flex items-center justify-center mb-3 shadow-lg`}>
@@ -236,7 +236,7 @@ export default function ViolationManagement() {
               </div>
             </div>
 
-            <div className="flex space-x-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <button 
                 type="submit" 
                 className="px-8 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-xl hover:from-orange-700 hover:to-red-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold"
@@ -246,7 +246,7 @@ export default function ViolationManagement() {
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="px-8 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all font-semibold"
+                className="px-8 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all font-semibold w-full sm:w-auto"
               >
                 Cancel
               </button>

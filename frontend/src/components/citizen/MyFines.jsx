@@ -58,7 +58,7 @@ export default function MyFines() {
             <h3 className="text-5xl font-black text-[#EF4444] tabular-nums tracking-tighter">₹{totalOutstanding.toFixed(2)}</h3>
           </div>
           
-          <button className={`bg-[#0F172A] text-white px-10 py-4 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-95 ${totalOutstanding === 0 ? 'opacity-30 pointer-events-none' : ''}`}>
+          <button className={`bg-[#0F172A] w-full md:w-auto text-white px-10 py-4 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-95 ${totalOutstanding === 0 ? 'opacity-30 pointer-events-none' : ''}`}>
              Pay All Fines
           </button>
         </div>

@@ -157,9 +157,9 @@ export default function AIAgentCenter() {
           </div>
           <div className="text-xs font-mono text-blue-400">LIVE CONNECTION ACTIVE</div>
         </div>
-        <div className="p-6 font-mono text-sm space-y-4 max-h-[400px] overflow-y-auto">
+        <div className="p-6 font-mono text-sm space-y-4 max-h-[400px] overflow-y-auto overflow-x-auto">
           {logs.map((log) => (
-            <div key={log.id} className="flex gap-4 animate-in fade-in slide-in-from-left-2 transition-all">
+            <div key={log.id} className="flex flex-col sm:flex-row gap-2 sm:gap-4 animate-in fade-in slide-in-from-left-2 transition-all text-xs sm:text-sm">
               <span className="text-slate-500 whitespace-nowrap">[{log.time}]</span>
               <span className={`font-bold whitespace-nowrap min-w-[120px] ${
                 log.agent === 'SITA' ? 'text-blue-400' : 

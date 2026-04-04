@@ -199,10 +199,10 @@ export default function ParkingBooking({ user }) {
       </div>
 
       {/* Vehicle Type Toggle */}
-      <div className="flex justify-center py-6 bg-white border-b border-gray-100 gap-4">
+      <div className="flex flex-wrap justify-center py-6 bg-white border-b border-gray-100 gap-3 px-4">
          <button 
             onClick={() => { setVehicleType('4-wheeler'); setSelectedSpot(null); }}
-            className={`flex items-center gap-3 px-8 py-3 rounded-2xl font-black text-sm transition-all ${
+            className={`flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-8 py-3 rounded-2xl font-black text-xs sm:text-sm transition-all w-full sm:w-auto ${
                vehicleType === '4-wheeler' 
                ? 'bg-[#0F172A] text-white shadow-xl scale-105' 
                : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
@@ -213,7 +213,7 @@ export default function ParkingBooking({ user }) {
          </button>
          <button 
             onClick={() => { setVehicleType('2-wheeler'); setSelectedSpot(null); }}
-            className={`flex items-center gap-3 px-8 py-3 rounded-2xl font-black text-sm transition-all ${
+            className={`flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-8 py-3 rounded-2xl font-black text-xs sm:text-sm transition-all w-full sm:w-auto ${
                vehicleType === '2-wheeler' 
                ? 'bg-[#10B981] text-white shadow-xl scale-105' 
                : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
@@ -283,17 +283,19 @@ export default function ParkingBooking({ user }) {
             </div>
          </div>
 
-         {/* Right Side: True Parking Canvas */}
-         <div className="flex-1 w-full bg-white border border-gray-200 shadow-sm rounded-2xl flex flex-col items-center overflow-hidden">
-            {activeZone ? (
-              <div className="p-4 md:p-8 w-full overflow-x-auto flex flex-col items-center select-none pt-10">
-                
-                <div className="text-center font-bold text-lg tracking-widest text-[#0F172A] mb-8 bg-gray-50 px-6 py-2 rounded-lg border border-gray-200 inline-block uppercase shadow-sm">
-                  {activeZone.name} PARKING BAY 
-                  <span className="block text-sm text-gray-500 font-medium tracking-normal mt-1">₹{activeZone.pricePerHour}/hr</span>
-                </div>
+          {/* Right Side: True Parking Canvas */}
+          <div className="flex-1 w-full bg-white border border-gray-200 shadow-sm rounded-2xl flex flex-col items-center overflow-hidden">
+             {activeZone ? (
+               <div className="p-4 md:p-8 w-full overflow-x-auto hide-scrollbar select-none pt-10">
+                 
+                 <div className="text-center w-full mb-8">
+                   <div className="font-bold text-lg tracking-widest text-[#0F172A] bg-gray-50 px-6 py-2 rounded-lg border border-gray-200 inline-block uppercase shadow-sm">
+                     {activeZone.name} PARKING BAY 
+                     <span className="block text-sm text-gray-500 font-medium tracking-normal mt-1">₹{activeZone.pricePerHour}/hr</span>
+                   </div>
+                 </div>
 
-                <div className="flex flex-col bg-[#27272A] p-6 sm:p-10 rounded-xl border-8 border-gray-300 shadow-inner w-full min-w-max relative overflow-hidden">
+                 <div className="flex flex-col mx-auto min-w-max bg-[#27272A] p-6 sm:p-10 rounded-xl border-8 border-gray-300 shadow-inner relative overflow-hidden">
                    
                    {/* Asphalt texture / grain */}
                    <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '15px 15px' }}></div>
@@ -408,12 +410,12 @@ export default function ParkingBooking({ user }) {
 
       {/* Action Bar at bottom */}
       {selectedSpot && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-10px_30px_rgba(0,0,0,0.06)] p-4 flex justify-between items-center z-50 animate-slide-up">
-          <div className="flex flex-col pl-4 sm:pl-8">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-10px_30px_rgba(0,0,0,0.06)] p-4 flex justify-between items-center z-50 animate-slide-up flex-wrap sm:flex-nowrap gap-4">
+          <div className="flex flex-col w-full sm:w-auto pl-2 sm:pl-8 text-center sm:text-left">
              <span className="text-sm font-bold text-gray-500">
                {duration} Hr{duration > 1 ? 's' : ''} • Slot {selectedSpot.displayNum}
              </span>
-            <div className="flex items-baseline gap-1 mt-0.5">
+            <div className="flex items-baseline justify-center sm:justify-start gap-1 mt-0.5">
                <span className="text-2xl font-black text-[#0F172A]">₹{((activeZone?.pricePerHour || 100) * duration).toFixed(0)}</span>
                <span className="text-xs font-semibold text-gray-400">total cost</span>
             </div>
@@ -421,7 +423,7 @@ export default function ParkingBooking({ user }) {
           <button 
             onClick={handleBook}
             disabled={loading}
-            className="bg-[#10B981] text-white px-8 py-3.5 rounded-xl font-bold text-sm tracking-wide hover:bg-green-600 transition-transform active:scale-95 shadow-lg hover:shadow-xl mr-4 sm:mr-8 min-w-[160px] text-center"
+            className="w-full sm:w-auto bg-[#10B981] text-white px-8 py-3.5 rounded-xl font-bold text-sm tracking-wide hover:bg-green-600 transition-transform active:scale-95 shadow-lg hover:shadow-xl sm:mr-8 min-w-[160px] text-center"
           >
             {loading ? (
                <span className="flex items-center justify-center gap-2">

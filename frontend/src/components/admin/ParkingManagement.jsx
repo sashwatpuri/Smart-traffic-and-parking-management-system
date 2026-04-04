@@ -171,7 +171,7 @@ export default function ParkingManagement() {
   return (
     <div className="bg-[#F8FAFC] min-h-screen p-6 font-sans text-[#0F172A] relative">
       {/* Top Row: 4 Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between">
           <div>
             <p className="text-sm text-gray-500 font-medium tracking-wide">Total Zones</p>
@@ -233,9 +233,9 @@ export default function ParkingManagement() {
           </div>
 
           {/* ── Parking Bay Map ── */}
-          <div className="flex-1 bg-[#111827] rounded-xl shadow-lg p-6 flex flex-col border border-slate-700/50 min-h-[420px]">
+          <div className="flex-1 bg-[#111827] rounded-xl shadow-lg p-6 flex flex-col border border-slate-700/50 min-h-[420px] overflow-x-auto">
             {lanes.length > 0 ? (
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1 min-w-max">
                 {lanes.map((lane, laneIdx) => (
                   <React.Fragment key={lane.lane}>
                     <LaneRow lane={lane} />
@@ -287,8 +287,8 @@ export default function ParkingManagement() {
 
           <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100 flex-1">
             <h3 className="font-bold text-lg text-[#0F172A] mb-4">Active Violations ({activeZoneName})</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+            <div className="overflow-x-auto overflow-y-auto">
+              <table className="w-full text-left text-sm min-w-[400px]">
                 <thead>
                   <tr className="border-b border-gray-100 text-gray-400 uppercase tracking-wider text-xs">
                     <th className="pb-3 font-semibold">Slot</th>
@@ -350,8 +350,8 @@ export default function ParkingManagement() {
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
               </button>
             </div>
-            <div className="overflow-y-auto flex-1 pr-2">
-              <table className="w-full text-left text-sm">
+            <div className="overflow-y-auto overflow-x-auto flex-1 pr-2">
+              <table className="w-full text-left text-sm min-w-[400px]">
                 <thead className="sticky top-0 bg-white shadow-[0_4px_6px_-6px_rgba(0,0,0,0.1)]">
                   <tr className="border-b border-gray-100 text-gray-400 uppercase tracking-wider text-xs">
                     <th className="pb-3 pt-2 font-semibold">Slot</th>
