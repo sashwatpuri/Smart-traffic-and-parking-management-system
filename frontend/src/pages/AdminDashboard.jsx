@@ -7,6 +7,7 @@ import ViolationManagement from '../components/admin/ViolationManagement';
 import EmergencyControl from '../components/admin/EmergencyControl';
 import Analytics from '../components/admin/Analytics';
 import EncroachmentMonitoring from '../components/admin/EncroachmentMonitoring';
+import IllegalParkingDetection from '../components/admin/IllegalParkingDetection';
 import AIAgentCenter from '../components/admin/AIAgentCenter';
 import { Bot } from 'lucide-react';
 
