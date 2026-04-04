@@ -22,6 +22,7 @@ export default function ViolationManagement() {
       color: 'orange',
       description: 'Vehicle parked in restricted area'
     },
+
     { 
       id: 'double_parking', 
       label: 'Double Parking', 
