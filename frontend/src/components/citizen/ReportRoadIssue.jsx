@@ -23,6 +23,8 @@ export default function ReportRoadIssue() {
   const [previewUrl, setPreviewUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [showAgentModal, setShowAgentModal] = useState(false);
+  const [agentMessage, setAgentMessage] = useState('');
   
   const fileInputRef = useRef(null);
 
@@ -112,8 +114,10 @@ export default function ReportRoadIssue() {
 
       await axios.post('/api/road-issues', payload);
       
-      toast.success('Infrastructure issue reported successfully!');
-      
+      // Trigger AI Agent Response
+      setAgentMessage(`Hello! I am S.I.T.A., your city's Intelligent Traffic Agent. I have received your report about a ${issueType} at ${locationName}. Our vision systems are now verifying the impact on city traffic flow. Thank you for your contribution!`);
+      setShowAgentModal(true);
+
       // Reset form
       setIssueType('Pothole');
       setDescription('');
@@ -347,6 +351,34 @@ export default function ReportRoadIssue() {
           </div>
         </div>
       </div>
+      {/* S.I.T.A. AI Agent Overlay */}
+      {showAgentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0F172A]/80 backdrop-blur-md animate-in fade-in duration-300">
+           <div className="bg-white rounded-[2rem] shadow-2xl max-w-md w-full overflow-hidden border border-blue-100 animate-in zoom-in-95 duration-300 scale-100">
+              <div className="bg-blue-600 p-6 flex flex-col items-center text-center">
+                 <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white mb-4 relative">
+                    <Loader2 className="w-12 h-12 absolute animate-spin opacity-20" />
+                    <Info className="w-10 h-10" />
+                 </div>
+                 <h2 className="text-2xl font-black text-white">S.I.T.A. Assistant</h2>
+                 <p className="text-blue-100 text-xs font-bold uppercase tracking-widest mt-1">Autonomous City Management</p>
+              </div>
+              <div className="p-8">
+                 <div className="bg-gray-50 rounded-2xl p-4 mb-6 border border-gray-100">
+                    <p className="text-[#0F172A] font-medium leading-relaxed italic text-sm">
+                       "{agentMessage}"
+                    </p>
+                 </div>
+                 <button 
+                   onClick={() => setShowAgentModal(false)}
+                   className="w-full bg-blue-600 text-white rounded-xl py-4 font-black text-sm tracking-widest uppercase hover:bg-blue-700 transition-all shadow-lg"
+                 >
+                   Got it, thanks!
+                 </button>
+              </div>
+           </div>
+        </div>
+      )}
     </div>
   );
 }

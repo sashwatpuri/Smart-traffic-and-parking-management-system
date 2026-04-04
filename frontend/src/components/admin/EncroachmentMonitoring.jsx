@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, AlertTriangle, MapPin, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Camera, AlertTriangle, MapPin, Clock, CheckCircle, XCircle, Bot } from 'lucide-react';
 
 export default function EncroachmentMonitoring() {
   const [encroachments, setEncroachments] = useState([]);
@@ -222,10 +222,14 @@ export default function EncroachmentMonitoring() {
                     <div className="flex-1 space-y-3">
                       <div className="flex items-start justify-between">
                         <div>
-                          <div className="flex items-center space-x-2 mb-2">
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(enc.status)}`}>
-                              {enc.status.replace('-', ' ').toUpperCase()}
-                            </span>
+                          <div className="flex items-center gap-3 mb-2">
+                             <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(enc.status)}`}>
+                               {enc.status.replace('-', ' ').toUpperCase()}
+                             </span>
+                             <span className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-700 rounded-lg text-[10px] font-black tracking-widest border border-blue-100 uppercase animate-pulse">
+                               <Bot className="w-3 h-3" />
+                               Guardian AI Verified
+                             </span>
                           </div>
                           <h3 className="text-lg font-bold text-gray-900">{enc.detectedObject.toUpperCase()} in {enc.zone.replace('-', ' ')}</h3>
                         </div>

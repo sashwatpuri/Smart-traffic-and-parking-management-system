@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Bot } from 'lucide-react';
 
 export default function TrafficMonitoring() {
   // Global control mode state
@@ -171,6 +171,21 @@ export default function TrafficMonitoring() {
             <div className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-[#0F172A]/90 backdrop-blur-md px-3 py-1.5 rounded-md border border-slate-600 shadow-lg">
               <div className="w-2.5 h-2.5 rounded-full bg-[#EF4444] animate-pulse"></div>
               <span className="text-white text-sm font-semibold tracking-wide">{activeZone?.name}</span>
+            </div>
+
+            {/* Agent Insight Overlay */}
+            <div className="absolute top-16 left-4 z-10 max-w-[200px] pointer-events-none">
+              <div className="bg-blue-600/90 backdrop-blur-md px-3 py-2 rounded-lg shadow-xl border border-blue-400 animate-in fade-in slide-in-from-left duration-700">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Bot className="w-3.5 h-3.5 text-white" />
+                  <span className="text-[10px] font-black text-white tracking-widest uppercase">Agent Insight</span>
+                </div>
+                <p className="text-[11px] text-blue-50 font-medium leading-tight">
+                  {activeZone?.congestion === 'HIGH' 
+                    ? "SITA is extending Green phase by 15s to clear heavy backlog." 
+                    : "Maintaining optimal balance between pedestrian and vehicle flow."}
+                </p>
+              </div>
             </div>
 
             {/* Top Right Label - Live Clock & Date */}

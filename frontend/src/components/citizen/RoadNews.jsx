@@ -28,9 +28,21 @@ export default function RoadNews() {
     // Connect to local socket
     const socket = io('http://localhost:5000');
     
-    // Listen for new road issues in real-time
-    socket.on('new-road-issue', () => {
+    // Listen for new items or status changes in real-time
+    socket.on('new-road-issue', (data) => {
        fetchIssues();
+       if (data.status === 'Verification') {
+         toast.success(`S.I.T.A. has automatically flagged a new ${data.type} for verification at ${data.location}!`);
+       } else {
+         toast.success(`New ${data.type} reported at ${data.location}`);
+       }
+    });
+
+    socket.on('road-issue-updated', (data) => {
+       fetchIssues();
+       toast(`Update: Incident at ${data.location} is now ${data.newStatus}`, {
+         icon: 'ℹ️'
+       });
     });
 
     return () => {

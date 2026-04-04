@@ -16,17 +16,15 @@ router.get('/', authMiddleware, async (req, res) => {
     if (!canReadAll) {
       // For citizens, find fines matching their userId OR their vehicleNumber
       const user = await User.findById(req.user.userId);
-      filter = {
-        $or: [
-          { userId: req.user.userId },
-          { vehicleNumber: user?.vehicleNumber }
-        ]
-      };
       
-      // If user has no vehicle number, just use userId
-      if (!user?.vehicleNumber) {
-        filter = { userId: req.user.userId };
+      const orConditions = [{ userId: req.user.userId }];
+      
+      // Only filter by vehicleNumber if the user actually has one set
+      if (user?.vehicleNumber && user.vehicleNumber.trim() !== "") {
+        orConditions.push({ vehicleNumber: user.vehicleNumber });
       }
+      
+      filter = { $or: orConditions };
     }
 
     const fines = await Fine.find(filter).populate('userId', 'name email').sort({ issuedAt: -1 });
@@ -48,15 +46,17 @@ router.post('/issue', authMiddleware, requirePermission('fine:issue'), async (re
     const fineId = `FINE${Date.now()}`;
     const fine = new Fine({
       fineId,
-      userId: owner?._id,
+      userId: owner?._id || null,
       vehicleNumber: normalizedNumber || vehicleNumber,
       violationType,
       amount,
       currency: 'INR',
-      location,
+      location: typeof location === 'string' ? { name: location } : location,
       imageUrl,
+      status: 'pending',
       warningIssued: true,
-      warningTime: new Date()
+      warningTime: new Date(),
+      issuedAt: new Date()
     });
 
     await fine.save();

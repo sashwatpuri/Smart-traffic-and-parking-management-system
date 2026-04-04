@@ -47,13 +47,20 @@ router.post('/', authMiddleware, async (req, res) => {
       status: 'Reported'
     });
 
+    // S.I.T.A. Automated Logic (Agent USP)
+    // If pothole is reported, SITA automatically assigns it to 'Verification' phase
+    if (issueType === 'Pothole') {
+      newIssue.status = 'Verification';
+    }
+
     await newIssue.save();
 
-    // Emit socket event for real-time admin notification
+    // Emit socket event for real-time notification to all
     io.emit('new-road-issue', {
       issueId: newIssue._id,
       type: issueType,
       location: locationName,
+      status: newIssue.status,
       timestamp: new Date()
     });
 
@@ -95,6 +102,12 @@ router.patch('/:id/status', authMiddleware, requirePermission('road-issues:write
       resourceType: 'road_issue',
       resourceId: req.params.id,
       metadata: { newStatus: status }
+    });
+
+    io.emit('road-issue-updated', {
+      issueId: updatedIssue._id,
+      newStatus: status,
+      location: updatedIssue.locationName
     });
 
     res.json(updatedIssue);

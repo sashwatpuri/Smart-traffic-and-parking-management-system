@@ -7,7 +7,8 @@ import ViolationManagement from '../components/admin/ViolationManagement';
 import EmergencyControl from '../components/admin/EmergencyControl';
 import Analytics from '../components/admin/Analytics';
 import EncroachmentMonitoring from '../components/admin/EncroachmentMonitoring';
-import IllegalParkingDetection from '../components/admin/IllegalParkingDetection';
+import AIAgentCenter from '../components/admin/AIAgentCenter';
+import { Bot } from 'lucide-react';
 
 export default function AdminDashboard({ user, onLogout }) {
   const location = useLocation();
@@ -26,6 +27,7 @@ export default function AdminDashboard({ user, onLogout }) {
     { id: 'illegal-parking', label: 'Illegal Parking AI', icon: Ban, path: '/admin/illegal-parking', color: 'rose' },
     { id: 'encroachment', label: 'Encroachment Monitor', icon: Camera, path: '/admin/encroachment', color: 'indigo' },
     { id: 'emergency', label: 'Emergency', icon: Truck, path: '/admin/emergency', color: 'red' },
+    { id: 'agents', label: 'AI Agent Center', icon: Bot, path: '/admin/agents', color: 'indigo' },
     { id: 'analytics', label: 'Analytics', icon: Activity, path: '/admin/analytics', color: 'purple' }
   ];
 
@@ -133,6 +135,7 @@ export default function AdminDashboard({ user, onLogout }) {
               <Route path="/illegal-parking" element={<IllegalParkingDetection />} />
               <Route path="/encroachment" element={<EncroachmentMonitoring />} />
               <Route path="/emergency" element={<EmergencyControl />} />
+              <Route path="/agents" element={<AIAgentCenter />} />
               <Route path="/analytics" element={<Analytics />} />
             </Routes>
           </div>

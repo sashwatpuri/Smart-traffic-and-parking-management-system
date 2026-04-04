@@ -37,6 +37,8 @@ app.post(
 );
 
 app.use(express.json());
+app.use('/public', express.static('public'));
+app.use('/uploads', express.static('uploads'));
 
 async function seedDefaultUsers() {
   const adminExists = await User.findOne({ email: env.DEFAULT_ADMIN_EMAIL });
