@@ -45,6 +45,14 @@ router.post('/register', async (req, res) => {
   try {
     const { name, email, password, phone, vehicleNumber } = req.body;
 
+    if (vehicleNumber) {
+      const cleanVehicleNumber = vehicleNumber.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+      const plateRegex = /^[A-Z]{2}[0-9]{2}[A-Z]{1,2}[0-9]{4}$/;
+      if (!plateRegex.test(cleanVehicleNumber)) {
+        return res.status(400).json({ message: 'Invalid vehicle number format. Must be in MH12AB1234 format.' });
+      }
+    }
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
