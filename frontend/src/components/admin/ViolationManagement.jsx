@@ -23,14 +23,6 @@ export default function ViolationManagement() {
       description: 'Vehicle parked in restricted area'
     },
     { 
-      id: 'no_parking_zone', 
-      label: 'No Parking Zone', 
-      icon: AlertTriangle, 
-      amount: 1000, 
-      color: 'red',
-      description: 'Parking in designated no-parking zone'
-    },
-    { 
       id: 'double_parking', 
       label: 'Double Parking', 
       icon: Car, 
