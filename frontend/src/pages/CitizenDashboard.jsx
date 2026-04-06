@@ -32,10 +32,10 @@ export default function CitizenDashboard({ user, onLogout }) {
   }, [location]);
 
   const tabs = [
-    { id: 'map', label: 'Live Traffic Map', icon: MapIcon, path: '/citizen/map' },
     { id: 'parking', label: 'Book Parking', icon: ParkingCircle, path: '/citizen/parking', color: 'blue' },
     { id: 'bookings', label: 'My Bookings', icon: User, path: '/citizen/bookings' },
     { id: 'fines', label: 'My Fines', icon: AlertCircle, path: '/citizen/fines' },
+    { id: 'map', label: 'Live Traffic Map', icon: MapIcon, path: '/citizen/map' },
     { id: 'report', label: 'Report Violation', icon: Camera, path: '/citizen/report' },
     { id: 'road-issue', label: 'Report Issue', icon: Construction, path: '/citizen/road-issue' },
     { id: 'news', label: 'Road News', icon: Megaphone, path: '/citizen/news' }
