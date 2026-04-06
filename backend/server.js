@@ -13,6 +13,16 @@ import illegalParkingRoutes from './routes/illegalParking.js';
 import paymentRoutes, { razorpayWebhookHandler } from './routes/payments.js';
 import auditRoutes from './routes/audit.js';
 import roadIssueRoutes from './routes/roadIssues.js';
+import cameraRoutes from './routes/cameras.js';
+import violationsRoutes from './routes/violations.js';
+import streetEncroachmentRoutes from './routes/streetEncroachment.js';
+import trafficSignalsRoutes from './routes/trafficSignals.js';
+import mlDetectionRoutes from './routes/mlDetection.js';
+import documentRoutes from './routes/documentRoutes.js';
+import citizenReportRoutes from './routes/citizenReportRoutes.js';
+import signalCoordinationRoutes from './routes/signalCoordinationRoutes.js';
+import challanRoutes from './routes/challanRoutes.js';
+import emergencyVehicleRoutes from './routes/emergencyRoutes.js';
 import { initializeTrafficSimulation } from './services/trafficSimulator.js';
 import User from './models/User.js';
 import { env } from './config/env.js';
@@ -78,6 +88,26 @@ app.use('/api/illegal-parking', illegalParkingRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/road-issues', roadIssueRoutes);
+
+// ML-based traffic and parking enforcement system
+app.use('/api/cameras', cameraRoutes);
+app.use('/api/violations', violationsRoutes);
+app.use('/api/street-encroachment', streetEncroachmentRoutes);
+app.use('/api/traffic-signals', trafficSignalsRoutes);
+app.use('/api/ml-detection', mlDetectionRoutes);
+
+// Citizen document management and reporting
+app.use('/api/documents', documentRoutes);
+app.use('/api/citizen-reports', citizenReportRoutes);
+
+// Signal coordination for zero traffic optimization
+app.use('/api/signal-coordination', signalCoordinationRoutes);
+
+// Challan management and payment
+app.use('/api/challans', challanRoutes);
+
+// Emergency vehicle detection and green corridor management
+app.use('/api/emergency-vehicles', emergencyVehicleRoutes);
 
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
