@@ -6,6 +6,7 @@ import MyFines from '../components/citizen/MyFines';
 import ReportViolation from '../components/citizen/ReportViolation';
 import ReportRoadIssue from '../components/citizen/ReportRoadIssue';
 import RoadNews from '../components/citizen/RoadNews';
+import TrafficMap from '../components/citizen/TrafficMap';
 import { 
   ParkingCircle, 
   CreditCard, 
@@ -16,7 +17,8 @@ import {
   X, 
   Camera,
   Construction,
-  Megaphone
+  Megaphone,
+  Map as MapIcon
 } from 'lucide-react';
 
 export default function CitizenDashboard({ user, onLogout }) {
@@ -30,6 +32,7 @@ export default function CitizenDashboard({ user, onLogout }) {
   }, [location]);
 
   const tabs = [
+    { id: 'map', label: 'Live Traffic Map', icon: MapIcon, path: '/citizen/map' },
     { id: 'parking', label: 'Book Parking', icon: ParkingCircle, path: '/citizen/parking', color: 'blue' },
     { id: 'bookings', label: 'My Bookings', icon: User, path: '/citizen/bookings' },
     { id: 'fines', label: 'My Fines', icon: AlertCircle, path: '/citizen/fines' },
@@ -65,8 +68,8 @@ export default function CitizenDashboard({ user, onLogout }) {
               <ParkingCircle className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                Citizen Portal
+              <h1 className="text-lg font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent uppercase tracking-tighter">
+                Solapur Smart City
               </h1>
             </div>
           </div>
@@ -133,6 +136,7 @@ export default function CitizenDashboard({ user, onLogout }) {
             <Routes>
               <Route path="/" element={<ParkingBooking user={user} />} />
               <Route path="/parking" element={<ParkingBooking user={user} />} />
+              <Route path="/map" element={<TrafficMap />} />
               <Route path="/bookings" element={<MyBookings />} />
               <Route path="/fines" element={<MyFines />} />
               <Route path="/report" element={<ReportViolation />} />

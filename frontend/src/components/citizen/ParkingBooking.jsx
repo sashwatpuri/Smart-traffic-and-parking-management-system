@@ -39,9 +39,26 @@ export default function ParkingBooking({ user }) {
     return acc;
   }, {});
 
-  ['Zone D', 'Zone E', 'Zone F', 'VIP Zone', 'EV Charging'].forEach(z => {
-      if (!zonesMap[z]) zonesMap[z] = { id: z, name: z, pricePerHour: [50, 80, 100, 150, 200][Math.floor(Math.random()*5)], spots: [] };
+  const solapurHubs = [
+    { name: 'Siddheshwar Temple', price: 80 },
+    { name: 'Balives (Old Mill)', price: 50 },
+    { name: 'Navi Peth Market', price: 100 },
+    { name: 'Solapur Railway Station', price: 40 },
+    { name: 'Bhuikot Fort Area', price: 30 },
+    { name: 'Hotgi Road (Soham Mall)', price: 120 },
+    { name: 'ST Stand (Central)', price: 60 }
+  ];
+
+  solapurHubs.forEach(hub => {
+    if (!zonesMap[hub.name]) {
+      zonesMap[hub.name] = { id: hub.name, name: hub.name, pricePerHour: hub.price, spots: [] };
+    }
   });
+
+  // Set initial zone to first Solapur Hub if none from DB
+  if (!selectedZone && solapurHubs.length > 0) {
+     setSelectedZone(solapurHubs[0].name);
+  }
 
   const zonesList = Object.values(zonesMap).sort((a,b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
   const activeZone = zonesMap[selectedZone];
@@ -173,29 +190,11 @@ export default function ParkingBooking({ user }) {
 
   return (
     <div className="bg-[#F8FAFC] min-h-screen text-[#0F172A] font-sans pb-32">
-      {/* Header Event details */}
-      <div className="flex border-b border-gray-200 bg-white p-4 relative justify-center shadow-sm z-10">
+      {/* Header Event details - Simplified */}
+      <div className="flex border-b border-gray-200 bg-white p-4 relative justify-center shadow-sm z-10 lg:hidden">
         <div className="flex flex-col items-center justify-center">
           <h2 className="text-xl font-extrabold tracking-wide">{selectedZone ? selectedZone.toUpperCase() : 'SELECT A ZONE'}</h2>
         </div>
-      </div>
-
-      {/* Zone Selector Pills */}
-      <div className="flex overflow-x-auto gap-4 py-4 px-6 items-center justify-start md:justify-center border-b border-gray-100 bg-white hide-scrollbar scroll-smooth">
-        <span className="text-sm font-bold text-gray-400 mr-2 uppercase tracking-wide">Area:</span>
-        {zonesList.map(z => (
-          <button 
-            key={z.id}
-            onClick={() => { setSelectedZone(z.id); setSelectedSpot(null); }} 
-            className={`px-5 py-2 rounded-full border text-sm font-bold whitespace-nowrap transition-all shadow-sm ${
-              selectedZone === z.id 
-                ? 'bg-[#10B981] text-white border-[#10B981]' 
-                : 'bg-white text-gray-600 border-gray-300 hover:border-[#10B981] hover:text-[#10B981]'
-            }`}
-          >
-            {z.name}
-          </button>
-        ))}
       </div>
 
       {/* Vehicle Type Toggle */}
@@ -237,6 +236,19 @@ export default function ParkingBooking({ user }) {
             </h3>
 
             <div className="flex flex-col gap-5">
+               <div>
+                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1.5">Select Area</label>
+                 <select 
+                   value={selectedZone}
+                   onChange={(e) => { setSelectedZone(e.target.value); setSelectedSpot(null); }}
+                   className="w-full bg-gray-50 border border-gray-200 text-[#0F172A] text-sm rounded-lg focus:ring-2 focus:ring-[#10B981] focus:border-[#10B981] block p-3.5 font-semibold transition-all outline-none appearance-none"
+                 >
+                    {zonesList.map(z => (
+                      <option key={z.id} value={z.id}>{z.name}</option>
+                    ))}
+                 </select>
+               </div>
+
                <div>
                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1.5">Select Date</label>
                  <input 

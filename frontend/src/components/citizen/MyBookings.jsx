@@ -98,8 +98,7 @@ export default function MyBookings() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {bookings.map((booking) => {
-          const hold = getHoldTimer(booking.currentBooking.startTime);
-          const isExpired = hold.expired && !booking.hasCheckedIn; // Simulating check-in check
+          const isExpired = getRemainingTime(booking.currentBooking.endTime) === 'Expired';
 
           return (
             <div key={booking.spotId} className={`group bg-white rounded-[2.5rem] shadow-xl p-8 border-2 transition-all duration-300 ${isExpired ? 'border-rose-100 opacity-75' : 'border-slate-50 hover:border-blue-200'}`}>
@@ -116,27 +115,9 @@ export default function MyBookings() {
                 <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${
                   isExpired ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-blue-50 text-blue-600 border-blue-200'
                 }`}>
-                  {isExpired ? 'AUTO-RELEASED' : booking.status}
+                  {booking.status}
                 </span>
               </div>
-
-              {/* Arrival Grace Period Timer */}
-              {!isExpired && (
-                <div className="mb-8 p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 text-amber-600" />
-                    <span className="text-xs font-black text-amber-700 uppercase tracking-tight">Arrival Deadline</span>
-                  </div>
-                  <span className="font-mono font-black text-amber-600 text-lg">{hold.text}</span>
-                </div>
-              )}
-
-              {isExpired && (
-                <div className="mb-8 p-4 bg-rose-50 rounded-2xl border border-rose-100 flex items-center gap-3">
-                  <XCircle className="w-5 h-5 text-rose-500" />
-                  <p className="text-xs font-bold text-rose-700">Spot released due to non-arrival within 15 minutes.</p>
-                </div>
-              )}
 
               <div className="space-y-4 mb-8">
                 <div className="flex items-center justify-between">
