@@ -126,8 +126,8 @@ export default function AdminDashboard({ user, onLogout }) {
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 relative">
-          <div className="animate-fade-in max-w-7xl mx-auto">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8 relative">
+          <div className="animate-fade-in max-w-7xl mx-auto pb-20 lg:pb-0">
             <Routes>
               <Route path="/" element={<TrafficMonitoring />} />
               <Route path="/traffic" element={<TrafficMonitoring />} />

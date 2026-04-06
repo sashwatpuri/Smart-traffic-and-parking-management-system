@@ -225,13 +225,15 @@ export default function ParkingBooking({ user }) {
       </div>
 
       {/* Main Layout containing Sidebar and Map */}
-      <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row items-start gap-8 p-4 md:p-8">
+      <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row items-start gap-4 md:gap-8 p-3 md:p-8">
          
          {/* Left Side: Calendar & Time Picker Sidebar */}
-         <div className="w-full lg:w-80 flex-shrink-0 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm sticky top-8 z-10">
-            <h3 className="font-extrabold text-[#0F172A] mb-6 flex items-center gap-2">
-               <svg className="w-6 h-6 text-[#10B981]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-               Booking Schedule
+         <div className="w-full lg:w-80 flex-shrink-0 bg-white border border-gray-200 rounded-3xl p-5 md:p-6 shadow-sm lg:sticky lg:top-8 z-10">
+            <h3 className="font-extrabold text-[#0F172A] mb-4 md:mb-6 flex items-center gap-2">
+               <div className="p-2 bg-green-50 rounded-lg">
+                  <svg className="w-5 h-5 text-[#10B981]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+               </div>
+               <span className="text-sm md:text-base">Booking Schedule</span>
             </h3>
 
             <div className="flex flex-col gap-5">

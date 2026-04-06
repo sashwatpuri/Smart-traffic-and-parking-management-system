@@ -76,9 +76,20 @@ export default function Login({ onLogin }) {
       </div>
 
       {/* Right Side: White Panel Form */}
-      <div className="flex flex-col justify-center items-center w-full md:w-1/2 bg-white p-6 relative">
-        <div className="w-full max-w-[400px]">
+      <div className="flex flex-col justify-center items-center w-full md:w-1/2 bg-[#F8FAFC] md:bg-white p-6 relative">
+        <div className="w-full max-w-[400px] bg-white md:bg-transparent p-8 md:p-0 rounded-[2.5rem] shadow-2xl shadow-slate-200 md:shadow-none border border-slate-100 md:border-none">
           
+          {/* Mobile Only Logo */}
+          <div className="flex md:hidden items-center gap-3 mb-8 justify-center">
+            <div className="w-10 h-10 bg-[#0F172A] rounded-xl flex items-center justify-center shadow-lg">
+                <div className="flex flex-col gap-0.5">
+                   <div className="w-4 h-1.5 rounded-full bg-red-500"></div>
+                   <div className="w-4 h-1.5 rounded-full bg-amber-500"></div>
+                   <div className="w-4 h-1.5 rounded-full bg-emerald-500"></div>
+                </div>
+            </div>
+            <h1 className="text-2xl font-black text-[#0F172A] tracking-tighter">TrafficGrid</h1>
+          </div>
           {isRegister ? (
             /* Register Form View */
             <div className="animate-fade-in">

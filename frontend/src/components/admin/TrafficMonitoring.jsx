@@ -220,18 +220,18 @@ export default function TrafficMonitoring() {
         {/* Right Column - Stat Cards & Controls */}
         <div className="lg:w-[50%] xl:w-[40%] flex flex-col justify-between gap-4">
           
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Card: Vehicle Count */}
-            <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-100 flex flex-col justify-center">
-              <p className="text-sm text-gray-500 font-medium tracking-wide">Current Vehicle Count</p>
-              <h2 className="text-3xl xl:text-4xl font-bold text-[#0F172A] mt-2 tabular-nums">{activeZone?.vehicles}</h2>
+            <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex flex-col justify-center">
+              <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Live Flow Rate</p>
+              <h2 className="text-3xl sm:text-4xl font-black text-[#0F172A] mt-2 tabular-nums">{activeZone?.vehicles} <span className="text-sm font-medium text-slate-400">vehicles</span></h2>
             </div>
 
             {/* Card: Congestion */}
-            <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-100 flex flex-col justify-center">
-              <p className="text-sm text-gray-500 font-medium tracking-wide">Congestion Level</p>
+            <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex flex-col justify-center">
+              <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Saturation State</p>
               <div className="mt-2 text-left">
-                <span className={`px-3 py-1.5 rounded-full font-bold tracking-widest text-sm border inline-block ${getCongestionColor(activeZone?.congestion)}`}>
+                <span className={`px-4 py-2 rounded-full font-black tracking-widest text-[10px] uppercase border inline-block ${getCongestionColor(activeZone?.congestion)}`}>
                   {activeZone?.congestion}
                 </span>
               </div>
@@ -239,15 +239,15 @@ export default function TrafficMonitoring() {
           </div>
 
           {/* Adaptive Signal Control Panel */}
-          <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-100 flex flex-col flex-1">
-             <div className="flex justify-between items-center mb-4">
+          <div className="bg-white p-5 sm:p-6 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col flex-1">
+             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
                <div>
-                 <h3 className="text-lg font-bold text-[#0F172A]">Adaptive Signal Control</h3>
-                 <p className="text-sm text-gray-500">Manage junction traffic lights</p>
+                 <h3 className="text-lg font-black text-[#0F172A] tracking-tight">Signal Matrix</h3>
+                 <p className="text-xs font-bold text-gray-400">Autonomous & Manual Override</p>
                </div>
                
                {/* Toggle Switch */}
-               <div className="bg-gray-100 p-1 rounded-lg flex items-center">
+               <div className="bg-slate-100 p-1 rounded-xl flex items-center self-start sm:self-auto">
                  <button 
                   onClick={() => setControlMode('Automatic')}
                   className={`px-3 py-1.5 text-sm font-semibold rounded-md transition-all ${controlMode === 'Automatic' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}

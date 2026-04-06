@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { ParkingCircle, MapPin, Clock, XCircle } from 'lucide-react';
+import { ParkingCircle, MapPin, Clock, XCircle, Navigation, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export default function MyBookings() {
   const [bookings, setBookings] = useState([]);
+  const [now, setNow] = useState(new Date());
 
   useEffect(() => {
     fetchBookings();
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
   }, []);
 
   const fetchBookings = async () => {
@@ -22,7 +25,6 @@ export default function MyBookings() {
       setBookings([...data, ...mockData]);
     } catch (error) {
       console.error('Error fetching bookings:', error);
-      // Fallback for demo
       const mockStr = localStorage.getItem('mockBookings');
       const mockData = mockStr ? JSON.parse(mockStr) : [];
       setBookings(mockData);
@@ -54,109 +56,147 @@ export default function MyBookings() {
     }
   };
 
+  const navigateToParking = (booking) => {
+    // Generate a maps URL based on the zone name/location
+    const query = encodeURIComponent(`${booking.zone} Solapur Parking`);
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${query}`;
+    window.open(mapsUrl, '_blank');
+  };
+
   const getRemainingTime = (endTime) => {
-    const now = new Date();
     const end = new Date(endTime);
     const diff = end - now;
-    
     if (diff <= 0) return 'Expired';
-    
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    
     return `${hours}h ${minutes}m`;
   };
 
+  const getHoldTimer = (startTime) => {
+    const start = new Date(startTime);
+    const fifteenMins = 15 * 60 * 1000;
+    const expiry = new Date(start.getTime() + fifteenMins);
+    const diff = expiry - now;
+    
+    if (diff <= 0) return { status: 'Expired', text: '00:00', expired: true };
+    
+    const minutes = Math.floor(diff / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    return { 
+      status: 'Active', 
+      text: `${minutes}:${seconds.toString().padStart(2, '0')}`, 
+      expired: false 
+    };
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-2xl font-bold mb-2">My Bookings</h2>
-        <p className="text-gray-600">View and manage your parking reservations</p>
+    <div className="space-y-6 pb-20">
+      <div className="bg-white rounded-3xl shadow-sm p-8 border border-slate-100">
+        <h2 className="text-3xl font-black text-[#0F172A] mb-2 tracking-tight">My Active <span className="text-blue-600">Reservations</span></h2>
+        <p className="text-slate-500 font-medium">Manage your bookings and navigate to your secured spots.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {bookings.map((booking) => (
-          <div key={booking.spotId} className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-blue-500">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center">
-                <ParkingCircle className="w-8 h-8 text-blue-500 mr-3" />
-                <div>
-                  <h3 className="text-lg font-bold">{booking.spotId}</h3>
-                  <p className="text-sm text-gray-600">{booking.zone}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {bookings.map((booking) => {
+          const hold = getHoldTimer(booking.currentBooking.startTime);
+          const isExpired = hold.expired && !booking.hasCheckedIn; // Simulating check-in check
+
+          return (
+            <div key={booking.spotId} className={`group bg-white rounded-[2.5rem] shadow-xl p-8 border-2 transition-all duration-300 ${isExpired ? 'border-rose-100 opacity-75' : 'border-slate-50 hover:border-blue-200'}`}>
+              <div className="flex items-start justify-between mb-8">
+                <div className="flex items-center">
+                  <div className={`p-4 rounded-2xl mr-4 ${isExpired ? 'bg-rose-50 text-rose-500' : 'bg-blue-50 text-blue-600'}`}>
+                    <ParkingCircle className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-[#0F172A]">{booking.spotId}</h3>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{booking.zone}</p>
+                  </div>
+                </div>
+                <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                  isExpired ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-blue-50 text-blue-600 border-blue-200'
+                }`}>
+                  {isExpired ? 'AUTO-RELEASED' : booking.status}
+                </span>
+              </div>
+
+              {/* Arrival Grace Period Timer */}
+              {!isExpired && (
+                <div className="mb-8 p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-amber-600" />
+                    <span className="text-xs font-black text-amber-700 uppercase tracking-tight">Arrival Deadline</span>
+                  </div>
+                  <span className="font-mono font-black text-amber-600 text-lg">{hold.text}</span>
+                </div>
+              )}
+
+              {isExpired && (
+                <div className="mb-8 p-4 bg-rose-50 rounded-2xl border border-rose-100 flex items-center gap-3">
+                  <XCircle className="w-5 h-5 text-rose-500" />
+                  <p className="text-xs font-bold text-rose-700">Spot released due to non-arrival within 15 minutes.</p>
+                </div>
+              )}
+
+              <div className="space-y-4 mb-8">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center group">
+                    <MapPin className="w-5 h-5 text-slate-300 mr-3 group-hover:text-blue-500 transition-colors" />
+                    <span className="text-sm font-bold text-slate-600">{booking.location?.name || booking.zone}</span>
+                  </div>
+                  <div className="flex items-center text-emerald-600">
+                    <Clock className="w-4 h-4 mr-1.5" />
+                    <span className="text-sm font-black">{getRemainingTime(booking.currentBooking.endTime)}</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-50">
+                  <div className="bg-slate-50 p-3 rounded-xl">
+                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Vehicle</p>
+                    <p className="text-sm font-black text-slate-700">{booking.currentBooking.vehicleNumber}</p>
+                  </div>
+                  <div className="bg-slate-50 p-3 rounded-xl">
+                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Total Rate</p>
+                    <p className="text-sm font-black text-slate-700">₹{booking.pricePerHour}/hr</p>
+                  </div>
                 </div>
               </div>
-              <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
-                {booking.status}
-              </span>
+
+              <div className="flex flex-col gap-3">
+                <button
+                  disabled={isExpired}
+                  onClick={() => navigateToParking(booking)}
+                  className={`flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-black text-sm transition-all shadow-lg ${
+                    isExpired ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-[#0F172A] text-white hover:bg-blue-600 hover:shadow-blue-200'
+                  }`}
+                >
+                  <Navigation className="w-5 h-5" />
+                  TAKE ME TO MY PARKING
+                </button>
+                
+                <button
+                  onClick={() => handleRelease(booking.spotId)}
+                  className="flex items-center justify-center gap-2 w-full py-4 bg-white border-2 border-slate-100 text-slate-400 rounded-2xl font-black text-sm hover:border-rose-200 hover:text-rose-500 transition-all"
+                >
+                  <XCircle className="w-5 h-5" />
+                  CANCEL / RELEASE
+                </button>
+              </div>
             </div>
-
-            <div className="space-y-3">
-              <div className="flex items-start">
-                <MapPin className="w-5 h-5 text-gray-400 mr-2 mt-1" />
-                <div>
-                  <p className="text-sm text-gray-600">Location</p>
-                  <p className="font-medium">{booking.location.name}</p>
-                </div>
-              </div>
-
-              <div className="flex items-start">
-                <Clock className="w-5 h-5 text-gray-400 mr-2 mt-1" />
-                <div>
-                  <p className="text-sm text-gray-600">Time Remaining</p>
-                  <p className="font-medium text-green-600">
-                    {getRemainingTime(booking.currentBooking.endTime)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="pt-3 border-t">
-                <div className="flex justify-between text-sm">
-                   <span className="font-semibold">{booking.currentBooking.vehicleNumber}</span>
-                 </div>
-                 <div className="flex justify-between text-sm mt-1">
-                   <span className="text-gray-600">Type:</span>
-                   <span className="font-semibold uppercase text-xs bg-gray-100 px-2 rounded-md">{booking.vehicleCategory || '4-wheeler'}</span>
-                 </div>
-                 <div className="flex justify-between text-sm mt-1">
-                  <span className="text-gray-600">Rate:</span>
-                  <span>₹{booking.pricePerHour}/hr</span>
-                </div>
-                <div className="flex justify-between text-sm mt-1">
-                  <span className="text-gray-600">Payment:</span>
-                  <span
-                    className={`font-semibold ${
-                      booking.currentBooking.paymentStatus === 'paid' ? 'text-green-600' : 'text-orange-600'
-                    }`}
-                  >
-                    {(booking.currentBooking.paymentStatus || 'pending').toUpperCase()}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm mt-1">
-                  <span className="text-gray-600">Start:</span>
-                  <span>{new Date(booking.currentBooking.startTime).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-sm mt-1">
-                  <span className="text-gray-600">End:</span>
-                  <span>{new Date(booking.currentBooking.endTime).toLocaleString()}</span>
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => handleRelease(booking.spotId)}
-              className="w-full mt-4 flex items-center justify-center px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-            >
-              <XCircle className="w-5 h-5 mr-2" />
-              Release Parking
-            </button>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {bookings.length === 0 && (
-        <div className="bg-white rounded-lg shadow p-12 text-center">
-          <ParkingCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">No active bookings</p>
+        <div className="bg-white rounded-[3rem] shadow-xl p-20 text-center border-2 border-dashed border-slate-100">
+          <div className="bg-slate-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8">
+            <ParkingCircle className="w-12 h-12 text-slate-300" />
+          </div>
+          <h3 className="text-2xl font-black text-slate-800 mb-2">No Active Bookings</h3>
+          <p className="text-slate-400 font-bold mb-8">You haven't reserved any parking spots yet.</p>
+          <a href="/citizen/parking" className="inline-block bg-blue-600 text-white px-10 py-4 rounded-2xl font-black text-sm shadow-xl hover:scale-105 transition-transform">
+             FIND PARKING NOW
+          </a>
         </div>
       )}
     </div>
