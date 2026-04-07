@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Car, ParkingCircle, AlertTriangle, Activity, LogOut, Truck, Menu, X, Camera, Ban } from 'lucide-react';
+import { Car, ParkingCircle, AlertTriangle, Activity, LogOut, Truck, Menu, X, Camera, Ban, Zap } from 'lucide-react';
 import TrafficMonitoring from '../components/admin/TrafficMonitoring';
 import ParkingManagement from '../components/admin/ParkingManagement';
 import ViolationManagement from '../components/admin/ViolationManagement';
@@ -9,6 +9,7 @@ import Analytics from '../components/admin/Analytics';
 import EncroachmentMonitoring from '../components/admin/EncroachmentMonitoring';
 import IllegalParkingDetection from '../components/admin/IllegalParkingDetection';
 import AIAgentCenter from '../components/admin/AIAgentCenter';
+import MLDetectionUpload from '../components/admin/MLDetectionUpload';
 import { Bot } from 'lucide-react';
 
 export default function AdminDashboard({ user, onLogout }) {
@@ -25,6 +26,7 @@ export default function AdminDashboard({ user, onLogout }) {
     { id: 'traffic', label: 'Traffic Monitoring', icon: Car, path: '/admin/traffic', color: 'blue' },
     { id: 'parking', label: 'Parking Management', icon: ParkingCircle, path: '/admin/parking', color: 'green' },
     { id: 'violations', label: 'Violations', icon: AlertTriangle, path: '/admin/violations', color: 'orange' },
+    { id: 'ml-detection', label: 'ML Detection', icon: Zap, path: '/admin/ml-detection', color: 'cyan' },
     { id: 'illegal-parking', label: 'Illegal Parking AI', icon: Ban, path: '/admin/illegal-parking', color: 'rose' },
     { id: 'encroachment', label: 'Encroachment Monitor', icon: Camera, path: '/admin/encroachment', color: 'indigo' },
     { id: 'emergency', label: 'Emergency', icon: Truck, path: '/admin/emergency', color: 'red' },
@@ -40,7 +42,8 @@ export default function AdminDashboard({ user, onLogout }) {
       rose: isActive ? 'bg-rose-600 text-white' : 'text-rose-600 hover:bg-rose-50',
       indigo: isActive ? 'bg-indigo-600 text-white' : 'text-indigo-600 hover:bg-indigo-50',
       red: isActive ? 'bg-red-600 text-white' : 'text-red-600 hover:bg-red-50',
-      purple: isActive ? 'bg-purple-600 text-white' : 'text-purple-600 hover:bg-purple-50'
+      purple: isActive ? 'bg-purple-600 text-white' : 'text-purple-600 hover:bg-purple-50',
+      cyan: isActive ? 'bg-cyan-600 text-white' : 'text-cyan-600 hover:bg-cyan-50'
     };
     return colors[color];
   };
@@ -133,6 +136,7 @@ export default function AdminDashboard({ user, onLogout }) {
               <Route path="/traffic" element={<TrafficMonitoring />} />
               <Route path="/parking" element={<ParkingManagement />} />
               <Route path="/violations" element={<ViolationManagement />} />
+              <Route path="/ml-detection" element={<MLDetectionUpload />} />
               <Route path="/illegal-parking" element={<IllegalParkingDetection />} />
               <Route path="/encroachment" element={<EncroachmentMonitoring />} />
               <Route path="/emergency" element={<EmergencyControl />} />

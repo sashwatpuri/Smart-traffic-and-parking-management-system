@@ -20,7 +20,7 @@ export default function IllegalParkingDetection() {
 
   const fetchViolations = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/illegal-parking', {
+      const response = await fetch('http://localhost:3001/api/illegal-parking', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -40,7 +40,7 @@ export default function IllegalParkingDetection() {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/illegal-parking/stats/summary', {
+      const response = await fetch('http://localhost:3001/api/illegal-parking/stats/summary', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -58,7 +58,7 @@ export default function IllegalParkingDetection() {
 
   const handleSendAlert = async (id) => {
     try {
-      await fetch(`http://localhost:5000/api/illegal-parking/${id}/send-alert`, {
+      await fetch(`http://localhost:3001/api/illegal-parking/${id}/send-alert`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -73,7 +73,7 @@ export default function IllegalParkingDetection() {
 
   const handleIssueFine = async (id) => {
     try {
-      await fetch(`http://localhost:5000/api/illegal-parking/${id}/issue-fine`, {
+      await fetch(`http://localhost:3001/api/illegal-parking/${id}/issue-fine`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -89,7 +89,7 @@ export default function IllegalParkingDetection() {
 
   const handleDismiss = async (id) => {
     try {
-      await fetch(`http://localhost:5000/api/illegal-parking/${id}/dismiss`, {
+      await fetch(`http://localhost:3001/api/illegal-parking/${id}/dismiss`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,

@@ -18,7 +18,7 @@ export default function MyFines() {
   useEffect(() => {
     fetchFines();
 
-    const socket = io('http://localhost:5000');
+    const socket = io('http://localhost:3001');
     
     // Listen for new fines that might belong to the current user
     socket.on('new-fine', () => {

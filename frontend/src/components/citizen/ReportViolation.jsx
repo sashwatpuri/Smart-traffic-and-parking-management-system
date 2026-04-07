@@ -42,8 +42,8 @@ export default function ReportViolation() {
     
     try {
       const endpoint = reportType === 'parking' 
-        ? 'http://localhost:5000/api/illegal-parking/citizen-report' 
-        : 'http://localhost:5000/api/encroachments/citizen-report';
+        ? 'http://localhost:3001/api/illegal-parking/citizen-report' 
+        : 'http://localhost:3001/api/encroachments/citizen-report';
         
       const payload = {
          location,

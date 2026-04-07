@@ -61,7 +61,4 @@ const parkingZoneSchema = new mongoose.Schema(
   }
 );
 
-parkingZoneSchema.index({ zoneId: 1 });
-parkingZoneSchema.index({ isActive: 1 });
-
 export default mongoose.model('ParkingZone', parkingZoneSchema);

@@ -26,7 +26,7 @@ export default function RoadNews() {
     fetchIssues();
     
     // Connect to local socket
-    const socket = io('http://localhost:5000');
+    const socket = io('http://localhost:3001');
     
     // Listen for new items or status changes in real-time
     socket.on('new-road-issue', (data) => {

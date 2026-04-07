@@ -1,6 +1,7 @@
 /**
  * ML Detection Processing Routes
  * Main endpoint for camera feed processing and ML model coordination
+ * Supports: live camera feeds, file uploads (image/video), and auto challan generation
  */
 
 import express from 'express';
@@ -9,370 +10,541 @@ import TrafficViolation from '../models/TrafficViolation.js';
 import HelmetViolation from '../models/HelmetViolation.js';
 import StreetEncroachment from '../models/StreetEncroachment.js';
 import Camera from '../models/Camera.js';
-import {
-  processVehicleDetection,
-  processHelmetDetection,
-  extractNumberPlates,
-  processSpeedDetection,
-  processSignalViolation,
-  processCrowdDetection,
-  updateCameraHeartbeat
-} from '../services/mlCameraService.js';
-import MLModelInference from '../services/mlModelInference.js';
+import IllegalParking from '../models/IllegalParking.js';
+import { realMLInference } from '../services/realMLInference.js';
+import { createChallanFromViolation } from '../services/challanGenerationService.js';
+import { uploadMiddleware, processUploadedFile, processVideoFrames } from '../services/fileUploadService.js';
+import { authMiddleware } from '../middleware/auth.js';
 import { io } from '../server.js';
 
 const router = express.Router();
-const mlInference = new MLModelInference();
 
 /**
  * POST /api/ml-detection/process-frame
  * Main endpoint for processing camera frames with all ML models
- * Receives base64 frame data or frame URL
+ * Supports: base64 data, frame URL, or file upload
  */
-router.post('/process-frame', async (req, res) => {
+router.post('/process-frame', authMiddleware, async (req, res) => {
   try {
     const {
-      cameraId,
-      frameData,
+      cameraId = 'SIM-CAM-001',
+      frameUrl,
+      location = 'Default Location',
+      latitude = 37.7749,
+      longitude = -122.4194,
+      signalStatus = 'green',
+      speedLimit = 60
+    } = req.body;
+
+    console.log(`\n🎥 Processing frame from ${cameraId}`);
+
+    const frameData = {
       frameUrl,
       location,
       latitude,
       longitude,
       signalStatus,
       speedLimit,
-      cameraCalibration,
-      fps
-    } = req.body;
-
-    if (!cameraId || (!frameData && !frameUrl)) {
-      return res.status(400).json({ message: 'Missing required fields: cameraId and frameData/frameUrl' });
-    }
-
-    // Update camera heartbeat
-    await updateCameraHeartbeat(cameraId);
-
-    // Get camera configuration
-    const camera = await Camera.findOne({ cameraId });
-    if (!camera) {
-      return res.status(404).json({ message: 'Camera not registered' });
-    }
-
-    const detectionResults = {
-      cameraId,
-      timestamp: new Date(),
-      violations: [],
-      detections: {}
+      fps: 30,
+      timestamp: new Date()
     };
 
-    // Prepare frame data for ML models
-    const mlFrameData = {
-      frameUrl: frameUrl || frameData,
-      location,
-      latitude,
-      longitude,
-      fps: fps || 30,
-      cameraCalibration,
-      violationZoneMask: null,
-      historicData: []
+    // Run REAL ML inference
+    const detectionResult = await realMLInference.processFrame(frameData);
+
+    const violationsSummary = {
+      helmet: [],
+      speeding: [],
+      signalViolation: [],
+      crowd: [],
+      hawkers: []
     };
 
-    // 1. VEHICLE DETECTION (YOLOv8)
-    if (camera.mlModelsEnabled.vehicleDetection) {
-      try {
-        const vehicles = await processVehicleDetection(cameraId, mlFrameData, mlInference);
-        detectionResults.detections.vehicles = vehicles;
-      } catch (error) {
-        console.error('Vehicle detection failed:', error);
-      }
-    }
+    const challengesCreated = [];
 
-    // 2. HELMET DETECTION (for 2-wheelers)
-    if (camera.mlModelsEnabled.helmetDetection && detectionResults.detections.vehicles) {
-      try {
-        const helmetResults = await processHelmetDetection(
-          cameraId,
-          mlFrameData,
-          detectionResults.detections.vehicles,
-          mlInference
-        );
-        detectionResults.detections.helmets = helmetResults;
+    // ========== HELMET VIOLATION PROCESSING ==========
+    for (const helmet of detectionResult.helmets) {
+      if (!helmet.helmetDetected) {
+        const vehicle = detectionResult.vehicles.find(v => v.id === helmet.vehicleId);
+        if (vehicle && vehicle.plateNumber) {
+          console.log(`  🪖 Helmet violation: ${vehicle.plateNumber}`);
+          
+          const violation = await HelmetViolation.create({
+            vehicleNumber: vehicle.plateNumber,
+            helmetStatus: helmet.helmetType,
+            signalLocation: location,
+            latitude,
+            longitude,
+            cameraId,
+            imageUrl: frameUrl,
+            timestamp: new Date(),
+            severity: 'violation',
+            fineAmount: 500,
+            status: 'pending'
+          });
 
-        // Filter helmet violations
-        const helmetViolations = helmetResults.filter(h => h.violationId);
-        detectionResults.violations.push(...helmetViolations.map(v => ({
-          type: 'helmet',
-          violationId: v.violationId
-        })));
+          violationsSummary.helmet.push(violation._id);
 
-        // Emit real-time alert
-        if (helmetViolations.length > 0) {
+          // AUTO-CREATE CHALLAN
+          const challan = await createChallanFromViolation(violation, 'HelmetViolation');
+          if (challan) {
+            challengesCreated.push({
+              type: 'helmet',
+              challanNumber: challan.challanNumber,
+              vehicleNumber: vehicle.plateNumber,
+              fine: 500
+            });
+            console.log(`    ✅ Challan: ${challan.challanNumber}`);
+          }
+
+          // Broadcast alert
           io.emit('helmet_violation_detected', {
+            vehicleNumber: vehicle.plateNumber,
             cameraId,
-            count: helmetViolations.length,
+            fine: 500,
             timestamp: new Date()
           });
         }
-      } catch (error) {
-        console.error('Helmet detection failed:', error);
       }
     }
 
-    // 3. NUMBER PLATE EXTRACTION (OCR)
-    if (camera.mlModelsEnabled.numberPlateExtraction && detectionResults.detections.vehicles) {
-      try {
-        const plateResults = await extractNumberPlates(
-          cameraId,
-          mlFrameData,
-          detectionResults.detections.vehicles,
-          mlInference
-        );
-        detectionResults.detections.plates = plateResults;
-
-        // Update vehicle objects with plate numbers
-        plateResults.forEach(plate => {
-          const vehicle = detectionResults.detections.vehicles.find(v => v.id === plate.vehicleId);
-          if (vehicle) vehicle.plateNumber = plate.plateNumber;
-        });
-      } catch (error) {
-        console.error('Number plate extraction failed:', error);
-      }
-    }
-
-    // 4. SPEED DETECTION
-    if (camera.mlModelsEnabled.speedDetection && speedLimit && detectionResults.detections.vehicles) {
-      try {
-        const speedingVehicles = await processSpeedDetection(
-          cameraId,
-          mlFrameData,
-          detectionResults.detections.vehicles,
-          speedLimit,
-          mlInference
-        );
-        detectionResults.detections.speeding = speedingVehicles;
-
-        detectionResults.violations.push(...speedingVehicles.map(v => ({
-          type: 'speeding',
-          violationId: v.violationId
-        })));
-
-        // Emit real-time alert
-        if (speedingVehicles.length > 0) {
-          io.emit('speeding_detected', {
-            cameraId,
-            count: speedingVehicles.length,
-            maxSpeed: Math.max(...speedingVehicles.map(v => v.speed)),
+    // ========== SPEED VIOLATION PROCESSING ==========
+    for (const speed of detectionResult.speeds) {
+      if (speed.speed > speedLimit) {
+        const vehicle = detectionResult.vehicles.find(v => v.id === speed.vehicleId);
+        if (vehicle && vehicle.plateNumber) {
+          const fineAmount = (speed.speed - speedLimit) * 100;
+          console.log(`  🚗 Speeding: ${vehicle.plateNumber} at ${speed.speed} km/h (limit: ${speedLimit})`);
+          
+          const violation = await TrafficViolation.create({
+            vehicleNumber: vehicle.plateNumber,
+            violationType: 'speeding',
+            speedRecorded: speed.speed,
             speedLimit: speedLimit,
-            timestamp: new Date()
-          });
-        }
-      } catch (error) {
-        console.error('Speed detection failed:', error);
-      }
-    }
-
-    // 5. SIGNAL VIOLATION DETECTION
-    if (signalStatus && detectionResults.detections.vehicles) {
-      try {
-        const signalViolations = await processSignalViolation(
-          cameraId,
-          mlFrameData,
-          detectionResults.detections.vehicles,
-          signalStatus,
-          mlInference
-        );
-        detectionResults.detections.signalViolations = signalViolations;
-
-        detectionResults.violations.push(...signalViolations.map(v => ({
-          type: 'signal_violation',
-          violationId: v.violationId
-        })));
-
-        // Emit real-time alert
-        if (signalViolations.length > 0) {
-          io.emit('signal_violation_detected', {
+            signalLocation: location,
+            latitude,
+            longitude,
             cameraId,
-            count: signalViolations.length,
-            signal: signalStatus,
+            imageUrl: frameUrl,
+            timestamp: new Date(),
+            severity: 'high',
+            vehicleClass: vehicle.class,
+            fineAmount: fineAmount,
+            status: 'pending'
+          });
+
+          violationsSummary.speeding.push(violation._id);
+
+          // AUTO-CREATE CHALLAN
+          const challan = await createChallanFromViolation(violation, 'TrafficViolation');
+          if (challan) {
+            challengesCreated.push({
+              type: 'speeding',
+              challanNumber: challan.challanNumber,
+              vehicleNumber: vehicle.plateNumber,
+              fine: fineAmount
+            });
+            console.log(`    ✅ Challan: ${challan.challanNumber}`);
+          }
+
+          // Broadcast alert
+          io.emit('speeding_detected', {
+            vehicleNumber: vehicle.plateNumber,
+            speed: speed.speed,
+            limit: speedLimit,
+            fine: fineAmount,
+            cameraId,
             timestamp: new Date()
           });
         }
-      } catch (error) {
-        console.error('Signal violation detection failed:', error);
       }
     }
 
-    // 6. CROWD DETECTION (Street Encroachment)
-    if (camera.mlModelsEnabled.crowdDetection) {
-      try {
-        const crowdResult = await processCrowdDetection(cameraId, mlFrameData, mlInference);
-        if (crowdResult) {
-          detectionResults.detections.crowd = crowdResult;
-          detectionResults.violations.push({
-            type: 'street_encroachment',
-            encroachmentId: crowdResult.encroachmentId
+    // ========== SIGNAL VIOLATION PROCESSING ==========
+    for (const sigViolation of detectionResult.signalViolations) {
+      const vehicle = detectionResult.vehicles.find(v => v.id === sigViolation.vehicleId);
+      if (vehicle && vehicle.plateNumber) {
+        const fineAmount = signalStatus === 'red' ? 1000 : 500;
+        console.log(`  🚦 Signal violation: ${vehicle.plateNumber} (${signalStatus} light)`);
+        
+        const violation = await TrafficViolation.create({
+          vehicleNumber: vehicle.plateNumber,
+          violationType: 'signal_breaking',
+          signalStatus: signalStatus,
+          signalLocation: location,
+          latitude,
+          longitude,
+          cameraId,
+          imageUrl: frameUrl,
+          timestamp: new Date(),
+          severity: signalStatus === 'red' ? 'high' : 'medium',
+          vehicleClass: vehicle.class,
+          fineAmount: fineAmount,
+          status: 'pending'
+        });
+
+        violationsSummary.signalViolation.push(violation._id);
+
+        // AUTO-CREATE CHALLAN
+        const challan = await createChallanFromViolation(violation, 'TrafficViolation');
+        if (challan) {
+          challengesCreated.push({
+            type: 'signal_violation',
+            challanNumber: challan.challanNumber,
+            vehicleNumber: vehicle.plateNumber,
+            fine: fineAmount
           });
-
-          // Emit real-time alert
-          if (crowdResult.roadBlockagePercentage > 30) {
-            io.emit('street_encroachment_detected', {
-              cameraId,
-              crowdSize: crowdResult.crowdSize,
-              blockagePercentage: crowdResult.roadBlockagePercentage,
-              severity: crowdResult.crowdSize > 10 ? 'high' : 'medium',
-              timestamp: new Date()
-            });
-          }
+          console.log(`    ✅ Challan: ${challan.challanNumber}`);
         }
-      } catch (error) {
-        console.error('Crowd detection failed:', error);
+
+        // Broadcast alert
+        io.emit('signal_violation_detected', {
+          vehicleNumber: vehicle.plateNumber,
+          signal: signalStatus,
+          fine: fineAmount,
+          cameraId,
+          timestamp: new Date()
+        });
       }
     }
 
-    // 7. CONGESTION DETECTION
-    if (detectionResults.detections.vehicles) {
-      try {
-        const congestionAnalysis = await mlInference.detectCongestion(mlFrameData);
-        if (congestionAnalysis.congestionLevel > 0) {
-          detectionResults.detections.congestion = congestionAnalysis;
+    // ========== CROWD DETECTION (Street Encroachment) ==========
+    if (detectionResult.crowd.crowdDetected && detectionResult.crowd.crowdSize > 5) {
+      console.log(`  👥 Crowd detected: ${detectionResult.crowd.crowdSize} people, ${detectionResult.crowd.roadBlockagePercentage}% blockage`);
+      
+      const encroachment = await StreetEncroachment.create({
+        encroachmentType: 'pedestrian_gathering',
+        location,
+        latitude,
+        longitude,
+        cameraId,
+        crowdSize: detectionResult.crowd.crowdSize,
+        roadBlockagePercentage: detectionResult.crowd.roadBlockagePercentage,
+        imageUrl: frameUrl,
+        timestamp: new Date(),
+        severity: detectionResult.crowd.roadBlockagePercentage > 60 ? 'critical' : 'high',
+        status: detectionResult.crowd.roadBlockagePercentage > 60 ? 'reported' : 'detected'
+      });
 
-          // Log high congestion
-          if (congestionAnalysis.congestionLevel > 75) {
-            await MLDetectionLog.create({
-              cameraId,
-              detectionType: 'congestion_high',
-              detectionDetails: congestionAnalysis,
-              frameUrl: frameUrl || frameData,
-              processingStatus: 'completed'
-            });
+      violationsSummary.crowd.push(encroachment._id);
 
-            io.emit('high_congestion_alert', {
-              cameraId,
-              congestionLevel: congestionAnalysis.congestionLevel,
-              vehicleCount: congestionAnalysis.vehicleCount,
-              estimatedWaitTime: congestionAnalysis.estimatedWaitTime,
-              timestamp: new Date()
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Congestion detection failed:', error);
-      }
+      // Broadcast alert
+      io.emit('street_encroachment_detected', {
+        type: 'crowd',
+        crowdSize: detectionResult.crowd.crowdSize,
+        blockagePercentage: detectionResult.crowd.roadBlockagePercentage,
+        severity: encroachment.severity,
+        cameraId,
+        timestamp: new Date()
+      });
     }
 
-    // Increment camera violation counter
-    if (detectionResults.violations.length > 0) {
-      await Camera.updateOne(
-        { cameraId },
-        { $inc: { totalViolationsDetected: detectionResults.violations.length } }
-      );
+    // ========== HAWKER/VENDOR DETECTION ==========
+    if (detectionResult.hawkers.hawkersDetected) {
+      console.log(`  🏪 Hawkers detected: ${detectionResult.hawkers.hawkerCount} vendors`);
+      
+      const encroachment = await StreetEncroachment.create({
+        encroachmentType: 'hawker_vendor',
+        location,
+        latitude,
+        longitude,
+        cameraId,
+        crowdSize: detectionResult.hawkers.hawkerCount,
+        roadBlockagePercentage: detectionResult.hawkers.roadBlockagePercentage,
+        imageUrl: frameUrl,
+        timestamp: new Date(),
+        severity: 'medium',
+        status: 'detected',
+        description: `${detectionResult.hawkers.hawkerCount} vendors with ${detectionResult.hawkers.merchandiseItems} items`
+      });
+
+      violationsSummary.hawkers.push(encroachment._id);
+
+      // Broadcast alert for authority action
+      io.emit('hawker_vendor_detected', {
+        vendorCount: detectionResult.hawkers.hawkerCount,
+        items: detectionResult.hawkers.merchandiseItems,
+        blockagePercentage: detectionResult.hawkers.roadBlockagePercentage,
+        location,
+        cameraId,
+        actionRequired: 'Authority intervention needed',
+        timestamp: new Date()
+      });
     }
+
+    // Create detection log
+    const detectionLog = await MLDetectionLog.create({
+      cameraId,
+      detectionType: 'comprehensive_analysis',
+      detectionDetails: {
+        vehiclesDetected: detectionResult.vehicles.length,
+        helmetViolations: detectionResult.helmets.filter(h => !h.helmetDetected).length,
+        speedingViolations: detectionResult.speeds.filter(s => s.speed > speedLimit).length,
+        signalViolations: detectionResult.signalViolations.length,
+        crowdDetected: detectionResult.crowd.crowdDetected,
+        hawkersDetected: detectionResult.hawkers.hawkersDetected,
+        challansGenerated: challengesCreated.length
+      },
+      frameUrl,
+      violationsCreated: violationsSummary,
+      processingStatus: 'completed',
+      processingTime: detectionResult.processingTime
+    });
+
+    const totalViolations = Object.values(violationsSummary).reduce((sum, arr) => sum + arr.length, 0);
 
     res.json({
+      success: true,
       message: 'Frame processed successfully',
-      processedAt: new Date(),
+      timestamp: new Date(),
       cameraId,
-      violationsDetected: detectionResults.violations.length,
-      detections: detectionResults.detections,
-      violations: detectionResults.violations
+      summary: {
+        vehiclesDetected: detectionResult.vehicles.length,
+        helmetViolations: violationsSummary.helmet.length,
+        speedingViolations: violationsSummary.speeding.length,
+        signalViolations: violationsSummary.signalViolation.length,
+        crowdIncidents: violationsSummary.crowd.length,
+        hawkerIncidents: violationsSummary.hawkers.length,
+        totalViolations: totalViolations,
+        challansGenerated: challengesCreated.length
+      },
+      challansCreated: challengesCreated,
+      detectionLogId: detectionLog._id
     });
+
   } catch (error) {
     console.error('Error processing frame:', error);
-    res.status(500).json({ message: 'Internal server error', error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Error processing frame',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/ml-detection/upload-image
+ * Upload and process a single image
+ */
+router.post('/upload-image', authMiddleware, uploadMiddleware.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No image uploaded' });
+    }
+
+    console.log(`\n📸 Processing uploaded image: ${req.file.originalname}`);
+
+    const filePath = req.file.path;
+    const result = await processUploadedFile(filePath, 'image', 'UPLOAD-IMG-001');
+
+    res.json({
+      success: true,
+      message: 'Image processed successfully',
+      fileName: req.file.originalname,
+      fileSize: req.file.size,
+      ...result
+    });
+
+  } catch (error) {
+    console.error('Error processing image upload:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error processing image',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/ml-detection/upload-video
+ * Upload and process a video (extracts and processes key frames)
+ */
+router.post('/upload-video', authMiddleware, uploadMiddleware.single('video'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No video uploaded' });
+    }
+
+    console.log(`\n🎬 Processing uploaded video: ${req.file.originalname}`);
+
+    const filePath = req.file.path;
+    const result = await processVideoFrames(filePath, 'UPLOAD-VID-001', 5);
+
+    res.json({
+      success: true,
+      message: 'Video processed successfully',
+      fileName: req.file.originalname,
+      fileSize: req.file.size,
+      ...result
+    });
+
+  } catch (error) {
+    console.error('Error processing video upload:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error processing video',
+      error: error.message
+    });
   }
 });
 
 /**
  * GET /api/ml-detection/logs
- * Get ML detection logs
+ * Get ML detection logs with filtering
  */
-router.get('/logs', async (req, res) => {
+router.get('/logs', authMiddleware, async (req, res) => {
   try {
     const {
       cameraId,
       detectionType,
-      startDate,
-      endDate,
-      limit = 100,
+      limit = 50,
       page = 1
     } = req.query;
 
     const filter = {};
-
     if (cameraId) filter.cameraId = cameraId;
     if (detectionType) filter.detectionType = detectionType;
 
-    if (startDate || endDate) {
-      filter.timestamp = {};
-      if (startDate) filter.timestamp.$gte = new Date(startDate);
-      if (endDate) filter.timestamp.$lte = new Date(endDate);
-    }
-
     const skip = (page - 1) * limit;
 
-    const logs = await MLDetectionLog.find(filter)
-      .sort({ timestamp: -1 })
-      .limit(parseInt(limit))
-      .skip(skip);
-
-    const total = await MLDetectionLog.countDocuments(filter);
+    const [logs, total] = await Promise.all([
+      MLDetectionLog.find(filter)
+        .sort({ timestamp: -1 })
+        .skip(skip)
+        .limit(parseInt(limit)),
+      MLDetectionLog.countDocuments(filter)
+    ]);
 
     res.json({
-      logs,
+      success: true,
+      data: logs,
       pagination: {
-        total,
-        pages: Math.ceil(total / limit),
-        currentPage: parseInt(page)
+        current: parseInt(page),
+        total: Math.ceil(total / limit),
+        count: logs.length,
+        total
       }
     });
+
   } catch (error) {
     console.error('Error fetching detection logs:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching logs',
+      error: error.message
+    });
   }
 });
 
 /**
- * GET /api/ml-detection/statistics
- * Get ML detection statistics
+ * GET /api/ml-detection/violations
+ * Get detected violations by type
  */
-router.get('/statistics', async (req, res) => {
+router.get('/violations', authMiddleware, async (req, res) => {
   try {
-    const { startDate, endDate } = req.query;
+    const {
+      type = 'all',
+      status = 'pending',
+      limit = 50,
+      page = 1
+    } = req.query;
 
-    const filter = {};
-    if (startDate || endDate) {
-      filter.timestamp = {};
-      if (startDate) filter.timestamp.$gte = new Date(startDate);
-      if (endDate) filter.timestamp.$lte = new Date(endDate);
+    const skip = (page - 1) * limit;
+
+    if (type === 'helmet' || type === 'all') {
+      const violations = await HelmetViolation.find({ status })
+        .sort({ timestamp: -1 })
+        .skip(skip)
+        .limit(parseInt(limit));
+
+      const total = await HelmetViolation.countDocuments({ status });
+
+      return res.json({
+        success: true,
+        violationType: 'helmet',
+        data: violations,
+        pagination: {
+          current: parseInt(page),
+          total: Math.ceil(total / limit),
+          count: violations.length,
+          total
+        }
+      });
     }
 
-    const byType = await MLDetectionLog.aggregate([
-      { $match: filter },
-      {
-        $group: {
-          _id: '$detectionType',
-          count: { $sum: 1 }
-        }
-      }
-    ]);
+    if (type === 'traffic' || type === 'all') {
+      const violations = await TrafficViolation.find({ status })
+        .sort({ timestamp: -1 })
+        .skip(skip)
+        .limit(parseInt(limit));
 
-    const byCameras = await MLDetectionLog.aggregate([
-      { $match: filter },
-      {
-        $group: {
-          _id: '$cameraId',
-          detections: { $sum: 1 },
-          violations: { $sum: { $cond: ['$violationCreated', 1, 0] } }
+      const total = await TrafficViolation.countDocuments({ status });
+
+      return res.json({
+        success: true,
+        violationType: 'traffic',
+        data: violations,
+        pagination: {
+          current: parseInt(page),
+          total: Math.ceil(total / limit),
+          count: violations.length,
+          total
         }
+      });
+    }
+
+    res.json({ success: true, data: [] });
+
+  } catch (error) {
+    console.error('Error fetching violations:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching violations',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/ml-detection/stats
+ * Get ML detection statistics
+ */
+router.get('/stats', authMiddleware, async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const stats = {
+      today: {
+        helmetViolations: await HelmetViolation.countDocuments({ timestamp: { $gte: today } }),
+        speedingViolations: await TrafficViolation.countDocuments({ 
+          timestamp: { $gte: today },
+          violationType: 'speeding'
+        }),
+        signalViolations: await TrafficViolation.countDocuments({ 
+          timestamp: { $gte: today },
+          violationType: 'signal_breaking'
+        })
+      },
+      total: {
+        helmetViolations: await HelmetViolation.countDocuments(),
+        trafficViolations: await TrafficViolation.countDocuments(),
+        streetEncroachments: await StreetEncroachment.countDocuments()
       }
-    ]);
+    };
 
     res.json({
-      detectionsByType: byType,
-      detectionsByCamera: byCameras
+      success: true,
+      data: stats
     });
+
   } catch (error) {
-    console.error('Error fetching statistics:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('Error fetching stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching statistics',
+      error: error.message
+    });
   }
 });
 

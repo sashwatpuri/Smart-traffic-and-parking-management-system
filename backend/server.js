@@ -46,7 +46,9 @@ app.post(
   razorpayWebhookHandler
 );
 
-app.use(express.json());
+// Increase JSON body size limit to handle base64 encoded images/video frames
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use('/public', express.static('public'));
 app.use('/uploads', express.static('uploads'));
 

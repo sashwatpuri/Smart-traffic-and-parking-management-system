@@ -72,9 +72,4 @@ userSchema.methods.toPublicJSON = function () {
   return obj;
 };
 
-// Indexes for performance
-userSchema.index({ email: 1 });
-userSchema.index({ vehicleNumber: 1 });
-userSchema.index({ role: 1, isActive: 1 });
-
 export default mongoose.model('User', userSchema);

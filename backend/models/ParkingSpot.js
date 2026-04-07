@@ -12,13 +12,11 @@ const parkingSpotSchema = new mongoose.Schema(
     zoneId: {
       type: String,
       required: true,
-      uppercase: true,
-      index: true
+      uppercase: true
     },
     // Legacy field kept for compatibility
     zone: {
-      type: String,
-      index: true
+      type: String
     },
     location: {
       name: String,
@@ -28,20 +26,17 @@ const parkingSpotSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ['available', 'occupied', 'reserved', 'maintenance'],
-      default: 'available',
-      index: true
+      default: 'available'
     },
     type: {
       type: String,
       enum: ['regular', 'disabled', 'ev', 'vip'],
-      default: 'regular',
-      index: true
+      default: 'regular'
     },
     vehicleCategory: {
       type: String,
       enum: ['2-wheeler', '4-wheeler'],
-      default: '4-wheeler',
-      index: true
+      default: '4-wheeler'
     },
     floor: {
       type: Number,
@@ -58,8 +53,7 @@ const parkingSpotSchema = new mongoose.Schema(
     },
     isActive: {
       type: Boolean,
-      default: true,
-      index: true
+      default: true
     },
     currentBooking: {
       bookingId: { type: mongoose.Schema.Types.ObjectId, ref: 'ParkingBooking' },

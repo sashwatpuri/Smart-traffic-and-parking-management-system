@@ -2,6 +2,7 @@
  * ML Camera Service
  * Orchestrates ML model detections from camera feeds
  * Integrates: Vehicle detection, Helmet detection, Number plate recognition, Crowd detection, Speed detection
+ * AUTO-GENERATES CHALLANS for all violations
  */
 
 import MLDetectionLog from '../models/MLDetectionLog.js';
@@ -9,6 +10,8 @@ import TrafficViolation from '../models/TrafficViolation.js';
 import HelmetViolation from '../models/HelmetViolation.js';
 import StreetEncroachment from '../models/StreetEncroachment.js';
 import Camera from '../models/Camera.js';
+import { createChallanFromViolation } from './challanGenerationService.js';
+import { io } from '../server.js';
 
 /**
  * Process vehicle detection from frame
@@ -81,6 +84,21 @@ export async function processHelmetDetection(cameraId, frameData, vehicleDetecti
             severity: 'violation',
             fineAmount: 500,
             status: 'pending'
+          });
+          
+          // AUTO-CREATE CHALLAN
+          const challan = await createChallanFromViolation(violation, 'HelmetViolation');
+          if (challan) {
+            console.log(`🎟️ Auto-Challan: ${challan.challanNumber} for ${vehicle.plateNumber}`);
+          }
+          
+          // Broadcast real-time alert
+          io.emit('helmet_violation_detected', {
+            vehicleNumber: vehicle.plateNumber,
+            cameraId,
+            fine: 500,
+            challanNumber: challan?.challanNumber,
+            timestamp: new Date()
           });
           
           helmetDetections[helmetDetections.length - 1].violationId = violation._id;
@@ -168,11 +186,29 @@ export async function processSpeedDetection(cameraId, frameData, vehicleDetectio
             status: 'pending'
           });
           
+          // AUTO-CREATE CHALLAN
+          const challan = await createChallanFromViolation(violation, 'TrafficViolation');
+          if (challan) {
+            console.log(`🎟️ Auto-Challan: ${challan.challanNumber} for speeding violation`);
+          }
+          
+          // Broadcast real-time alert
+          io.emit('speeding_detected', {
+            vehicleNumber: vehicle.plateNumber,
+            speed: speed,
+            limit: speedLimit,
+            fine: violation.fineAmount,
+            challanNumber: challan?.challanNumber,
+            cameraId,
+            timestamp: new Date()
+          });
+          
           speedingVehicles.push({
             vehicleId: vehicle.id,
             speed: speed,
             speedLimit: speedLimit,
-            violationId: violation._id
+            violationId: violation._id,
+            challanNumber: challan?.challanNumber
           });
           
           await MLDetectionLog.create({
@@ -185,7 +221,8 @@ export async function processSpeedDetection(cameraId, frameData, vehicleDetectio
               confidence: speedAnalysis.confidence
             },
             frameUrl: frameData.frameUrl,
-            violationCreated: violation._id
+            violationCreated: violation._id,
+            challanGenerated: challan?.challanNumber
           });
         }
       }
@@ -226,10 +263,27 @@ export async function processSignalViolation(cameraId, frameData, vehicleDetecti
             status: 'pending'
           });
           
+          // AUTO-CREATE CHALLAN
+          const challan = await createChallanFromViolation(violation, 'TrafficViolation');
+          if (challan) {
+            console.log(`🎟️ Auto-Challan: ${challan.challanNumber} for signal violation`);
+          }
+          
+          // Broadcast real-time alert
+          io.emit('signal_violation_detected', {
+            vehicleNumber: vehicle.plateNumber,
+            signal: signalStatus,
+            fine: violation.fineAmount,
+            challanNumber: challan?.challanNumber,
+            cameraId,
+            timestamp: new Date()
+          });
+          
           violations.push({
             vehicleId: vehicle.id,
             signal: signalStatus,
-            violationId: violation._id
+            violationId: violation._id,
+            challanNumber: challan?.challanNumber
           });
           
           await MLDetectionLog.create({
@@ -241,7 +295,8 @@ export async function processSignalViolation(cameraId, frameData, vehicleDetecti
               confidence: isInViolationZone
             },
             frameUrl: frameData.frameUrl,
-            violationCreated: violation._id
+            violationCreated: violation._id,
+            challanGenerated: challan?.challanNumber
           });
         }
       }
