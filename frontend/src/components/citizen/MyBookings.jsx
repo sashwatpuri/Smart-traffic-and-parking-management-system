@@ -21,12 +21,12 @@ export default function MyBookings() {
       });
       
       const mockStr = localStorage.getItem('mockBookings');
-      const mockData = mockStr ? JSON.parse(mockStr) : [];
+      const mockData = mockStr ? JSON.parse(mockStr).filter(b => b.status === 'active') : [];
       setBookings([...data, ...mockData]);
     } catch (error) {
       console.error('Error fetching bookings:', error);
       const mockStr = localStorage.getItem('mockBookings');
-      const mockData = mockStr ? JSON.parse(mockStr) : [];
+      const mockData = mockStr ? JSON.parse(mockStr).filter(b => b.status === 'active') : [];
       setBookings(mockData);
     }
   };

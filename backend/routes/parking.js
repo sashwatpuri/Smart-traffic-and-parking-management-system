@@ -118,7 +118,8 @@ router.post('/release/:spotId', authMiddleware, async (req, res) => {
 router.get('/my-bookings', authMiddleware, async (req, res) => {
   try {
     const bookings = await ParkingSpot.find({
-      'currentBooking.userId': req.user.userId
+      'currentBooking.userId': req.user.userId,
+      status: 'occupied'
     }).sort({ updatedAt: -1 });
     res.json(bookings);
   } catch (error) {
