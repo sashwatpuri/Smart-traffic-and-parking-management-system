@@ -71,9 +71,8 @@ export default function ParkingBooking({ user }) {
     const realSpots = [...activeZone.spots].sort((a, b) => a.spotId.localeCompare(b.spotId));
     
     const lanes = [];
-    const is2W = vehicleType === '2-wheeler';
-    const numLanes = is2W ? 16 : 12; // More lanes for 2W as they are smaller
-    const spotsPerLane = is2W ? 24 : 14; 
+    const numLanes = vehicleType === '2-wheeler' ? 16 : 12; 
+    const spotsPerLane = vehicleType === '2-wheeler' ? 24 : 14; 
     
     // Filter real db slots by current vehicle vehicleType
     const filteredRealSpots = realSpots.filter(s => (s.vehicleCategory || '4-wheeler') === vehicleType);
@@ -81,20 +80,26 @@ export default function ParkingBooking({ user }) {
     // Create base massive lanes
     for (let lIdx = 0; lIdx < numLanes; lIdx++) {
       const letter = String.fromCharCode(65 + lIdx);
+      const isEVLane = vehicleType === 'ev' && (letter === 'E' || letter === 'V');
+      
       const lane = { id: `Lane ${letter}`, label: `LANE ${letter}`, spots: [] };
       for (let s = 1; s <= spotsPerLane; s++) {
           const fakeId = `fake-${vehicleType}-${lIdx}-${s}`;
           // Deterministic ambient layout
-          const isFakeOccupied = ((lIdx * 7) + (s * 3)) % 10 > 7; // Fewer fake occupied for 2W maybe?
+          const isFakeOccupied = ((lIdx * 7) + (s * 3)) % 10 > 7;
           const status = localBookings.includes(fakeId) ? 'occupied' : (isFakeOccupied ? 'occupied' : 'available');
           
+          let basePrice = vehicleType === '2-wheeler' ? Math.floor(activeZone.pricePerHour * 0.5) : activeZone.pricePerHour;
+          if (isEVLane) basePrice = Math.floor(basePrice * 1.2); // 20% premium for EV charging infrastructure
+
           lane.spots.push({ 
             spotId: fakeId, 
             status: status, 
             isReal: false, 
             displayNum: `${letter}${String(s).padStart(2, '0')}`,
-            pricePerHour: is2W ? Math.floor(activeZone.pricePerHour * 0.5) : activeZone.pricePerHour,
-            vehicleCategory: vehicleType
+            pricePerHour: basePrice,
+            vehicleCategory: vehicleType,
+            isEV: isEVLane
           });
       }
       lanes.push(lane);
@@ -215,12 +220,23 @@ export default function ParkingBooking({ user }) {
             onClick={() => { setVehicleType('2-wheeler'); setSelectedSpot(null); }}
             className={`flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-8 py-3 rounded-2xl font-black text-xs sm:text-sm transition-all w-full sm:w-auto ${
                vehicleType === '2-wheeler' 
-               ? 'bg-[#10B981] text-white shadow-xl scale-105' 
+               ? 'bg-[#0F172A] text-white shadow-xl scale-105' 
                : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
             }`}
          >
             <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 5.5l.5-.5c.8-.8 1.5-1 2-1s1.2.2 2 1 1 .5 1.5.5.9 0 1.5-.5h.5c0 1.4-1.1 2.5-2.5 2.5s-1.8-.1-2.5-.5-1.1-.5-1.5-.5-.4 0-.8.3l-.7.7c-.1.1-.3.1-.4 0s-.1-.2 0-.4l.5-.6zM7 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm10 0c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm-8.8-7l-1.2-3h-2v1h1.4l1.2 3.1c-.4.4-.6.9-.6 1.4 0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2 0-.5-.2-1-.6-1.4L15.2 12H11.5l1.6-4h-2.1l-2.8 4z"/></svg>
             2 WHEELER
+         </button>
+         <button 
+            onClick={() => { setVehicleType('ev'); setSelectedSpot(null); }}
+            className={`flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-8 py-3 rounded-2xl font-black text-xs sm:text-sm transition-all w-full sm:w-auto ${
+               vehicleType === 'ev' 
+               ? 'bg-[#10B981] text-white shadow-xl scale-105 border-2 border-emerald-400/50' 
+               : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+            }`}
+         >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            SOLAPUR EV (CHARGING)
          </button>
       </div>
 
@@ -349,18 +365,18 @@ export default function ParkingBooking({ user }) {
                                  key={spot.spotId}
                                  onClick={() => !isOccupied && setSelectedSpot(spot)}
                                  className={`${vehicleType === '2-wheeler' ? 'w-10 h-16 sm:w-14 sm:h-20' : 'w-14 h-24 sm:w-20 sm:h-32'} flex items-center justify-center relative cursor-pointer font-bold text-xs sm:text-sm transition-all border-l-4 border-white ${sIdx === 9 ? 'border-r-4' : ''} 
-                                   ${isTopFacingDown ? 'border-t-4' : 'border-b-4'}
+                                   ${spot.isEV ? 'border-emerald-500/60' : isTopFacingDown ? 'border-t-4' : 'border-b-4'}
                                    ${isOccupied 
                                      ? 'bg-red-500/20 cursor-not-allowed border-red-500/10'
                                      : isSelected
                                        ? 'bg-green-500/80 shadow-[0_0_20px_rgba(34,197,94,0.6)] z-10 scale-[1.03] border-green-300'
-                                       : 'bg-white/5 hover:bg-green-500/20 hover:border-green-300'
+                                       : spot.isEV ? 'bg-emerald-500/10 hover:bg-emerald-600/30' : 'bg-white/5 hover:bg-green-500/20 hover:border-green-300'
                                    }`}
                                >
                                  {/* Render spot label */}
                                  <span className={`absolute ${isTopFacingDown ? 'top-2' : 'bottom-2'} text-[10px] sm:text-xs font-black tracking-wider 
-                                    ${isOccupied ? 'text-red-400' : isSelected ? 'text-white' : 'text-gray-400'}`}>
-                                    {spot.displayNum}
+                                    ${isOccupied ? 'text-red-400' : isSelected ? 'text-white' : spot.isEV ? 'text-emerald-400 animate-pulse' : 'text-gray-400'}`}>
+                                    {spot.isEV && '⚡'}{spot.displayNum}
                                  </span>
 
                                  {/* Occupied indicator - Solid RED block in center representing car */}

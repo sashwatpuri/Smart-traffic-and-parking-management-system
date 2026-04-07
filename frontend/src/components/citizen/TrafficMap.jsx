@@ -23,7 +23,9 @@ import {
   Info,
   Layers as LayersIcon,
   Plus,
-  Minus
+  Minus,
+  Zap,
+  Activity
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -45,14 +47,45 @@ const SolapurUltimateGoogleMap = ({ zones }) => {
   const categories = [
     { icon: UtensilsCrossed, label: 'Restaurants' },
     { icon: Fuel, label: 'Petrol' },
+    { icon: Fuel, label: 'CNG Station', isNew: true },
     { icon: Hotel, label: 'Hotels' },
     { icon: Coffee, label: 'Cafe' },
-    { icon: MapPin, label: 'Atm' }
+    { icon: MapPin, label: 'Atm' },
+    { icon: Activity, label: 'Garage/Repair', isNew: true }
   ];
 
   return (
     <div className="relative w-full h-[75vh] md:h-[800px] bg-white rounded-[2rem] md:rounded-[3.5rem] overflow-hidden shadow-2xl border-[1px] md:border-[2px] border-white group select-none transition-all duration-1000">
       
+      {/* ⚡ SMART MOBILITY FLOATING PANEL - NEW FEATURE */}
+      <div className="absolute top-24 md:top-32 left-4 md:left-10 z-[50] flex flex-col gap-2 md:gap-3 pointer-events-none group-hover:scale-105 transition-transform duration-500">
+         <div className="flex flex-col bg-white/90 backdrop-blur-xl p-3 md:p-5 rounded-[2rem] md:rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white pointer-events-auto">
+            <h5 className="text-[8px] md:text-[10px] font-black text-blue-600 uppercase tracking-widest mb-3 md:mb-5 px-1 flex items-center gap-2">
+               <Zap className="w-3 h-3 animate-pulse text-emerald-500" />
+               Smart Services
+            </h5>
+            <div className="flex flex-col gap-3 md:gap-5">
+               <button onClick={() => setSearchQuery('Petrol Pump')} className="group/btn flex items-center gap-4 text-gray-500 hover:text-blue-600 transition-all">
+                  <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-50 rounded-2xl flex items-center justify-center group-hover/btn:bg-blue-600 group-hover/btn:text-white transition-all">
+                     <Fuel className="w-5 h-5 md:w-6 md:h-6" />
+                  </div>
+                  <span className="hidden md:block text-xs font-black uppercase tracking-tighter">Petrol Stations</span>
+               </button>
+               <button onClick={() => setSearchQuery('CNG Pump')} className="group/btn flex items-center gap-4 text-gray-500 hover:text-emerald-600 transition-all">
+                  <div className="w-10 h-10 md:w-12 md:h-12 bg-emerald-50 rounded-2xl flex items-center justify-center group-hover/btn:bg-emerald-600 group-hover/btn:text-white transition-all">
+                     <Fuel className="w-5 h-5 md:w-6 md:h-6 rotate-12" />
+                  </div>
+                  <span className="hidden md:block text-xs font-black uppercase tracking-tighter">CNG Stations</span>
+               </button>
+               <button onClick={() => setSearchQuery('Car Bike Repair Garage')} className="group/btn flex items-center gap-4 text-gray-500 hover:text-orange-600 transition-all">
+                  <div className="w-10 h-10 md:w-12 md:h-12 bg-orange-50 rounded-2xl flex items-center justify-center group-hover/btn:bg-orange-600 group-hover/btn:text-white transition-all">
+                     <Car className="w-5 h-5 md:w-6 md:h-6" />
+                  </div>
+                  <span className="hidden md:block text-xs font-black uppercase tracking-tighter">Nearby Garages</span>
+               </button>
+            </div>
+         </div>
+      </div>
       {/* 🚀 GOOGLE MAPS FLOATING UI (HUD) - MOBILE OPTIMIZED */}
       <div className="absolute top-4 md:top-6 left-1/2 -translate-x-1/2 w-[94%] md:w-[580px] z-[50] flex flex-col gap-3 md:gap-4 pointer-events-none">
          {/* Search Bar - Realistic Chrome Style */}
