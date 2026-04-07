@@ -143,11 +143,12 @@ export default function ParkingBooking({ user }) {
              paymentStatus: 'paid',
              startTime: new Date().toISOString(),
              endTime: new Date(new Date().getTime() + duration * 60 * 60 * 1000).toISOString()
-          }
+          },
+          updatedAt: new Date().toISOString()
        };
        const existingStr = localStorage.getItem('mockBookings');
        const existing = existingStr ? JSON.parse(existingStr) : [];
-       localStorage.setItem('mockBookings', JSON.stringify([...existing, newMock]));
+       localStorage.setItem('mockBookings', JSON.stringify([newMock, ...existing])); // Prepend new mock to show at top
     };
 
     try {
@@ -396,18 +397,18 @@ export default function ParkingBooking({ user }) {
                 {/* Legend */}
                 <div className="mt-12 mb-8 flex items-center justify-center gap-8 text-xs font-bold text-gray-500 uppercase tracking-widest">
                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-4 border-2 border-gray-400 rounded-sm bg-gray-100"></div>
-                      Available
+                       <div className="w-6 h-4 border-2 border-gray-400 rounded-sm bg-gray-100"></div>
+                       Available
                    </div>
                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-4 border-2 border-red-500 bg-red-500 rounded-sm flex items-center justify-center text-white">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"></path></svg>
-                      </div>
-                      Occupied
+                       <div className="w-6 h-4 border-2 border-red-500 bg-red-500 rounded-sm flex items-center justify-center text-white">
+                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"></path></svg>
+                       </div>
+                       Occupied
                    </div>
                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-4 bg-green-500 rounded-sm shadow-sm border border-green-600"></div>
-                      Selected
+                       <div className="w-6 h-4 bg-green-500 rounded-sm shadow-sm border border-green-600"></div>
+                       Selected
                    </div>
                 </div>
 
@@ -458,6 +459,7 @@ export default function ParkingBooking({ user }) {
         }
         .animate-slide-up { animation: slide-up 0.3s ease-out forwards; }
       `}} />
+
     </div>
   );
 }
