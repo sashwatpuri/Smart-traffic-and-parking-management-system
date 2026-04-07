@@ -121,6 +121,13 @@ router.post('/:id/pay', authMiddleware, async (req, res) => {
     fine.currency = 'INR';
     await fine.save();
 
+    console.log(`[REAL-TIME] Fine ${fine.fineId} marked as PAID. Broadcasting to all clients.`);
+    io.emit('fine-updated', {
+        fineId: fine.fineId,
+        status: 'paid',
+        userId: fine.userId
+    });
+
     res.json({ message: 'Fine paid successfully', fine });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -139,6 +146,12 @@ router.delete('/:id', authMiddleware, requirePermission('fine:cancel'), async (r
       action: 'fine.cancel',
       resourceType: 'fine',
       resourceId: req.params.id
+    });
+
+    console.log(`[REAL-TIME] Fine ${req.params.id} CANCELLED by Admin. Broadcasting.`);
+    io.emit('fine-updated', {
+        fineId: req.params.id,
+        status: 'cancelled'
     });
 
     res.json({ message: 'Fine cancelled' });

@@ -56,6 +56,13 @@ router.post('/book', authMiddleware, requirePermission('parking:book'), async (r
       });
     }
 
+    console.log(`[REAL-TIME] Parking spot ${spotId} BOOKED by citizen. Broadcasting city grid update.`);
+    io.emit('parking-updated', {
+        spotId,
+        status: 'reserved',
+        zone: spot.zone
+    });
+
     return res.json({
       message: 'Parking reserved. Complete payment to finalize booking.',
       spot,
@@ -91,6 +98,13 @@ router.post('/release/:spotId', authMiddleware, async (req, res) => {
         error: 'INVALID_BOOKING'
       });
     }
+
+    console.log(`[REAL-TIME] Parking spot ${spotId} RELEASED. Spot is now available.`);
+    io.emit('parking-updated', {
+        spotId,
+        status: 'available',
+        zone: spot.zone
+    });
 
     return res.json({
       message: 'Spot released successfully',

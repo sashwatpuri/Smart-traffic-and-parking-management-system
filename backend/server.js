@@ -125,8 +125,12 @@ async function startServer() {
   await initializeTrafficSimulation(io);
 
   httpServer.listen(env.PORT, () => {
-    console.log(`Server running on port ${env.PORT}`);
-    console.log(`Payment provider: ${env.PAYMENT_PROVIDER}`);
+    console.log(`====================================================`);
+    console.log(`🚀 SOLAPUR SMART CITY SERVER RUNNING ON PORT ${env.PORT}`);
+    console.log(`📡 REAL-TIME SOCKET.IO ENGINE: [ONLINE]`);
+    console.log(`💳 PAYMENT GATEWAY (${env.PAYMENT_PROVIDER}): [ACTIVE]`);
+    console.log(`🌍 CITY TRAFFIC SIMULATION: [LOADED]`);
+    console.log(`====================================================`);
   });
 }
 
