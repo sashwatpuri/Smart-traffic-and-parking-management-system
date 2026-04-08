@@ -8,6 +8,7 @@ import {
   ShieldCheck, 
   ArrowRight, 
   CheckCircle, 
+  CheckCircle2,
   Lock, 
   Info, 
   AlertCircle,
@@ -16,7 +17,10 @@ import {
   ChevronRight,
   Shield,
   Zap,
-  Building2
+  Building2,
+  X,
+  Car,
+  CreditCard as CardIcon
 } from 'lucide-react';
 
 export default function MyFines() {
@@ -30,52 +34,50 @@ export default function MyFines() {
     try {
       const { data } = await axios.get('/api/fines');
       
-      // If backend is empty, inject high-fidelity mock violations for presentation/demo
+      // If backend is empty OR fails, inject high-fidelity mock violations for presentation/demo
       if (data.length === 0) {
-         const mockFines = [
-            {
-               _id: 'mock-fine-1',
-               fineId: 'FINE-SLP-8821',
-               violationType: 'high_speed',
-               amount: 2000,
-               location: { name: 'Siddheshwar Temple Road' },
-               status: 'pending',
-               vehicleNumber: 'MH-13-BN-4452',
-               issuedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-            },
-            {
-               _id: 'mock-fine-2',
-               fineId: 'FINE-SLP-5590',
-               violationType: 'no_helmet',
-               amount: 500,
-               location: { name: 'Balives Junction' },
-               status: 'pending',
-               vehicleNumber: 'MH-13-BN-4452',
-               issuedAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
-            }
-         ];
-         setFines(mockFines);
+         setFines(getMockFines());
       } else {
          setFines(data);
       }
     } catch (error) {
       console.error('Error loading fines, falling back to mock data...');
-      // Fallback for demo stability
-      const mockFines = [
-         {
-            _id: 'mock-fine-1',
-            fineId: 'FINE-SLP-8821',
-            violationType: 'high_speed',
-            amount: 2000,
-            location: { name: 'Siddheshwar Temple Road' },
-            status: 'pending',
-            vehicleNumber: 'MH-13-BN-4452',
-            issuedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-         }
-      ];
-      setFines(mockFines);
+      setFines(getMockFines());
     }
   };
+
+  const getMockFines = () => [
+    {
+       _id: 'mock-fine-1',
+       fineId: 'FINE-SLP-8821',
+       violationType: 'high_speed',
+       amount: 2000,
+       location: { name: 'Siddheshwar Temple Road' },
+       status: 'pending',
+       vehicleNumber: 'MH-13-BN-4452',
+       issuedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+    },
+    {
+       _id: 'mock-fine-2',
+       fineId: 'FINE-SLP-5590',
+       violationType: 'no_helmet',
+       amount: 500,
+       location: { name: 'Balives Junction' },
+       status: 'pending',
+       vehicleNumber: 'MH-13-BN-4452',
+       issuedAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
+    },
+    {
+       _id: 'mock-fine-3',
+       fineId: 'FINE-SLP-1204',
+       violationType: 'illegal_parking',
+       amount: 1200,
+       location: { name: 'Saat Rasta' },
+       status: 'pending',
+       vehicleNumber: 'MH-13-BN-4452',
+       issuedAt: new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString()
+    }
+ ];
 
   useEffect(() => {
     fetchFines();
@@ -93,18 +95,19 @@ export default function MyFines() {
 
   const handleMockPayment = async () => {
     setIsProcessing(true);
-    // Simmons robust processing lag
+    // Simulate payment transaction with municipal node
     setTimeout(async () => {
       try {
         if (!selectedFine._id.startsWith('mock-')) {
            await axios.post(`/api/fines/${selectedFine._id}/pay`);
         } else {
-           // Local state update for mock fines to ensure UI reflects payment
-           setFines(prev => prev.map(f => f._id === selectedFine._id ? { ...f, status: 'paid' } : f));
+           // Local state update for mock fines
+           setFines(prev => prev.map(f => f._id === selectedFine._id || (selectedFine.fineId === 'MULTIPLE' && f.status === 'pending') ? { ...f, status: 'paid' } : f));
         }
         setPaymentStep(3); // Show Success UI
         setIsProcessing(false);
         if (!selectedFine._id.startsWith('mock-')) fetchFines();
+        toast.success('Municipal Settlement Complete');
       } catch (error) {
         toast.error('Payment processing failed');
         setIsProcessing(false);
@@ -211,9 +214,9 @@ export default function MyFines() {
                        {isPending ? (
                           <button 
                              onClick={() => initiatePayment(fine)}
-                             className="flex items-center gap-2 px-6 py-2.5 bg-[#0F172A] text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-600 transition-all active:scale-95 shadow-xl shadow-slate-100"
+                             className="flex items-center gap-2 px-6 py-2.5 bg-[#0F172A] text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all active:scale-95 shadow-xl shadow-slate-100"
                           >
-                             Checkout
+                             Payment Portal
                              <ChevronRight className="w-4 h-4" />
                           </button>
                        ) : (
@@ -248,14 +251,14 @@ export default function MyFines() {
             <div className="relative w-full max-w-[450px] bg-white rounded-3xl md:rounded-[2.5rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] overflow-hidden animate-slide-up">
                
                {/* Gateway Header */}
-               <div className="bg-[#1D2547] text-white p-8 pb-12 relative overflow-hidden">
+               <div className="bg-[#1D2547] text-white p-8 pb-12 relative overflow-hidden text-center">
                   <div className="absolute top-0 right-0 opacity-10"><Building2 className="w-40 h-40 translate-x-10 -translate-y-10" /></div>
                   <div className="flex justify-between items-center mb-8 relative z-10">
                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                        <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20">
                            <Building2 className="w-5 h-5 text-white" />
                         </div>
-                        <span className="text-sm font-black tracking-widest uppercase">Solapur <span className="text-blue-400">Pay</span></span>
+                        <span className="text-[10px] font-black tracking-widest uppercase">Municipal <span className="text-blue-400">Gateway</span></span>
                      </div>
                      <button onClick={() => !isProcessing && setShowPaymentGate(false)} className="p-2 hover:bg-white/10 rounded-full transition-all">
                         <X className="w-6 h-6" />
@@ -263,20 +266,20 @@ export default function MyFines() {
                   </div>
                   
                   <div className="relative z-10">
-                     <p className="text-[10px] font-black text-blue-300/80 uppercase tracking-widest mb-1">Municipal Payment Service</p>
-                     <h2 className="text-4xl font-black tracking-tighter">₹{selectedFine?.amount.toLocaleString()}</h2>
+                     <p className="text-[10px] font-black text-blue-300/80 uppercase tracking-[0.3em] mb-2 font-mono">Transaction Amount</p>
+                     <h2 className="text-5xl font-black tracking-tighter">₹{selectedFine?.amount.toLocaleString()}</h2>
                   </div>
                </div>
 
                {/* Step 1: Methods */}
                {paymentStep === 1 && (
                   <div className="p-8 -mt-6 bg-white rounded-t-3xl relative z-20">
-                     <div className="flex items-center gap-3 mb-8 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                     <div className="flex items-center gap-3 mb-8 bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
                         <Info className="w-5 h-5 text-blue-600 shrink-0" />
-                        <p className="text-[10px] font-bold text-slate-500 leading-tight">Settling fine for <span className="text-[#0F172A] font-black">{selectedFine?.vehicleNumber || 'MULTIPLE'}</span> via verified municipal node.</p>
+                        <p className="text-[10px] font-bold text-slate-500 leading-tight italic">Secure settlement via Solapur Municipal Grid Node #S{Math.floor(Math.random()*9000)+1000}</p>
                      </div>
 
-                     <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Select Payment Method</h5>
+                     <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Secure Payment Options</h5>
                      <div className="grid grid-cols-1 gap-3">
                         {[
                            { id: 'upi', label: 'UPI (GPay, PhonePe, BHIM)', icon: Smartphone, color: 'emerald' },
@@ -286,15 +289,15 @@ export default function MyFines() {
                            <button 
                               key={method.id} 
                               onClick={() => setPaymentStep(2)}
-                              className="group flex items-center justify-between p-5 rounded-2xl border-2 border-slate-50 hover:border-blue-500 transition-all hover:bg-blue-50/30"
+                              className="group flex items-center justify-between p-5 rounded-2xl border-2 border-slate-50 hover:border-blue-500 transition-all hover:bg-blue-50/10 shadow-sm hover:shadow-md"
                            >
                               <div className="flex items-center gap-4">
-                                 <div className={`p-3 bg-${method.color}-50 text-${method.color}-600 rounded-xl group-hover:scale-110 transition-transform`}>
+                                 <div className={`p-3 bg-slate-50 text-slate-600 group-hover:bg-blue-600 group-hover:text-white rounded-xl transition-all`}>
                                     <method.icon className="w-6 h-6" />
                                  </div>
                                  <span className="text-sm font-black text-slate-700">{method.label}</span>
                               </div>
-                              <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-blue-600" />
+                              <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-blue-600 transition-transform group-hover:translate-x-1" />
                            </button>
                         ))}
                      </div>
@@ -303,33 +306,35 @@ export default function MyFines() {
 
                {/* Step 2: Confirmation / Processing */}
                {paymentStep === 2 && (
-                  <div className="p-8 -mt-6 bg-white rounded-t-3xl relative z-20 flex flex-col items-center text-center">
-                     <div className="w-20 h-20 mb-6 relative">
-                        <div className={`absolute inset-0 border-4 border-slate-100 rounded-full`}></div>
+                  <div className="p-12 -mt-6 bg-white rounded-t-3xl relative z-20 flex flex-col items-center text-center min-h-[400px] justify-center">
+                     <div className="w-24 h-24 mb-8 relative">
+                        <div className={`absolute inset-0 border-4 border-slate-50 rounded-full`}></div>
                         <div className={`absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin ${isProcessing ? 'opacity-100' : 'opacity-0'}`}></div>
-                        <div className={`absolute inset-0 flex items-center justify-center ${!isProcessing ? 'scale-100' : 'scale-0'} transition-transform`}>
-                           <Lock className="w-8 h-8 text-blue-600" />
+                        <div className={`absolute inset-0 flex items-center justify-center ${!isProcessing ? 'scale-100' : 'scale-0'} transition-transform duration-500`}>
+                           <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center">
+                              <Lock className="w-8 h-8 text-blue-600" />
+                           </div>
                         </div>
                      </div>
                      
-                     <h4 className="text-xl font-black text-slate-900 mb-2">{isProcessing ? 'Processing Transaction' : 'Confirm Payment'}</h4>
-                     <p className="text-sm font-medium text-slate-500 mb-8 max-w-[250px]">
-                        {isProcessing ? 'Please do not refresh or close the municipal payment window.' : 'Review fine details before secure municipal settlement.'}
+                     <h4 className="text-2xl font-black text-[#0F172A] mb-3">{isProcessing ? 'Verifying with Bank...' : 'Confirm Transaction'}</h4>
+                     <p className="text-sm font-bold text-slate-400 mb-10 max-w-[280px] leading-relaxed">
+                        {isProcessing ? 'Please do not navigate away or refresh the page while we authenticate your settlement.' : `You are about to settle violation ID ${selectedFine?.fineId} for ₹${selectedFine?.amount}.`}
                      </p>
 
                      {!isProcessing && (
                         <div className="w-full flex flex-col gap-4">
                            <button 
                               onClick={handleMockPayment}
-                              className="w-full py-5 bg-[#1A73E8] text-white rounded-[1.8rem] font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-200"
+                              className="w-full py-6 bg-[#1A73E8] text-white rounded-[1.8rem] font-black text-sm uppercase tracking-widest shadow-2xl shadow-blue-200 active:scale-95 transition-all"
                            >
-                              Complete Settlement
+                              Settle Violation Now
                            </button>
                            <button 
                               onClick={() => setPaymentStep(1)}
-                              className="text-xs font-black text-slate-400 uppercase tracking-widest hover:text-red-500 transition-colors"
+                              className="text-xs font-black text-slate-300 uppercase tracking-widest hover:text-red-500 transition-colors"
                            >
-                              Cancel & Change Method
+                              Back to methods
                            </button>
                         </div>
                      )}
@@ -339,39 +344,41 @@ export default function MyFines() {
                {/* Step 3: Success */}
                {paymentStep === 3 && (
                   <div className="p-12 -mt-6 bg-white rounded-t-3xl relative z-20 flex flex-col items-center text-center">
-                     <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center mb-8 shadow-inner">
+                     <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center mb-8 shadow-inner animate-bounce">
                         <CheckCircle2 className="w-12 h-12 text-emerald-500" />
                      </div>
-                     <h4 className="text-2xl font-black text-slate-900 mb-2">Payment Successful</h4>
-                     <p className="text-sm font-medium text-slate-500 mb-10">Your violations for <span className="font-bold text-slate-900">{selectedFine?.vehicleNumber || 'Solapur City'}</span> have been cleared from the municipal grid.</p>
+                     <h4 className="text-3xl font-black text-[#0F172A] mb-3">Settlement Successful</h4>
+                     <p className="text-sm font-bold text-slate-400 mb-10 leading-relaxed">Your violation record has been cleared from the <span className="text-[#0F172A]">Solapur Municipal Enforcement Grid</span>. A digital receipt has been sent to your registered email.</p>
                      
-                     <div className="bg-slate-50 w-full p-4 rounded-2xl mb-8 flex items-center justify-between border border-slate-100">
+                     <div className="bg-slate-50 w-full p-5 rounded-2xl mb-10 flex items-center justify-between border border-slate-100">
                         <div className="text-left">
-                           <p className="text-[10px] font-black text-slate-400 uppercase">Transaction ID</p>
-                           <p className="text-xs font-black text-slate-900">TXN-SOL-{Date.now()}</p>
+                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Receipt Number</p>
+                           <p className="text-xs font-black text-[#0F172A] font-mono">RCPT-{Date.now().toString().slice(-8)}</p>
                         </div>
-                        <ShieldCheck className="w-6 h-6 text-emerald-400" />
+                        <div className="p-3 bg-emerald-100 text-emerald-600 rounded-xl">
+                           <ShieldCheck className="w-6 h-6" />
+                        </div>
                      </div>
 
                      <button 
                         onClick={() => setShowPaymentGate(false)}
-                        className="w-full py-5 bg-[#0F172A] text-white rounded-[1.8rem] font-black text-sm uppercase tracking-widest"
+                        className="w-full py-6 bg-[#0F172A] text-white rounded-[1.8rem] font-black text-sm uppercase tracking-widest shadow-2xl shadow-slate-200 active:scale-95 transition-all"
                      >
-                        Close Portal
+                        Close Settlement Portal
                      </button>
                   </div>
                )}
 
                {/* Secure Footer */}
                <div className="p-6 bg-slate-50/50 border-t border-slate-50 flex items-center justify-center gap-6">
-                  <div className="flex items-center gap-1.5 grayscale opacity-50">
+                  <div className="flex items-center gap-1.5 grayscale opacity-30">
                      <div className="w-8 h-5 bg-white border rounded flex items-center justify-center text-[8px] font-black">VISA</div>
                      <div className="w-8 h-5 bg-white border rounded flex items-center justify-center text-[8px] font-black italic">UPI</div>
                   </div>
                   <div className="h-4 w-[1px] bg-slate-200"></div>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-3">
                      <Lock className="w-3 h-3 text-emerald-500" />
-                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">PCI-DSS Secured</span>
+                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">AES-256 Bit Encryption</span>
                   </div>
                </div>
             </div>
@@ -383,7 +390,7 @@ export default function MyFines() {
            from { transform: translateY(100%); opacity: 0; }
            to { transform: translateY(0); opacity: 1; }
         }
-        .animate-slide-up { animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-slide-up { animation: slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
       `}</style>
 
     </div>
