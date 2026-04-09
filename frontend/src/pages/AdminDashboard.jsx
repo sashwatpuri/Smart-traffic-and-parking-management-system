@@ -10,7 +10,8 @@ import EncroachmentMonitoring from '../components/admin/EncroachmentMonitoring';
 import IllegalParkingDetection from '../components/admin/IllegalParkingDetection';
 import AIAgentCenter from '../components/admin/AIAgentCenter';
 import MLDetectionUpload from '../components/admin/MLDetectionUpload';
-import { Bot } from 'lucide-react';
+import DailyReports from '../components/admin/DailyReports';
+import { Bot, FileBarChart } from 'lucide-react';
 
 export default function AdminDashboard({ user, onLogout }) {
   const location = useLocation();
@@ -31,7 +32,8 @@ export default function AdminDashboard({ user, onLogout }) {
     { id: 'encroachment', label: 'Encroachment Monitor', icon: Camera, path: '/admin/encroachment', color: 'indigo' },
     { id: 'emergency', label: 'Emergency', icon: Truck, path: '/admin/emergency', color: 'red' },
     { id: 'agents', label: 'AI Agent Center', icon: Bot, path: '/admin/agents', color: 'indigo' },
-    { id: 'analytics', label: 'Analytics', icon: Activity, path: '/admin/analytics', color: 'purple' }
+    { id: 'analytics', label: 'Analytics', icon: Activity, path: '/admin/analytics', color: 'purple' },
+    { id: 'reports', label: 'Daily Reports', icon: FileBarChart, path: '/admin/reports', color: 'emerald' }
   ];
 
   const getColorClasses = (color, isActive) => {
@@ -43,7 +45,8 @@ export default function AdminDashboard({ user, onLogout }) {
       indigo: isActive ? 'bg-indigo-600 text-white' : 'text-indigo-600 hover:bg-indigo-50',
       red: isActive ? 'bg-red-600 text-white' : 'text-red-600 hover:bg-red-50',
       purple: isActive ? 'bg-purple-600 text-white' : 'text-purple-600 hover:bg-purple-50',
-      cyan: isActive ? 'bg-cyan-600 text-white' : 'text-cyan-600 hover:bg-cyan-50'
+      cyan: isActive ? 'bg-cyan-600 text-white' : 'text-cyan-600 hover:bg-cyan-50',
+      emerald: isActive ? 'bg-emerald-600 text-white' : 'text-emerald-600 hover:bg-emerald-50'
     };
     return colors[color];
   };
@@ -142,6 +145,7 @@ export default function AdminDashboard({ user, onLogout }) {
               <Route path="/emergency" element={<EmergencyControl />} />
               <Route path="/agents" element={<AIAgentCenter />} />
               <Route path="/analytics" element={<Analytics />} />
+              <Route path="/reports" element={<DailyReports />} />
             </Routes>
           </div>
         </main>

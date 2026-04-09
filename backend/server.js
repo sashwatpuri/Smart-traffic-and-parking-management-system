@@ -22,6 +22,7 @@ import documentRoutes from './routes/documentRoutes.js';
 import citizenReportRoutes from './routes/citizenReportRoutes.js';
 import signalCoordinationRoutes from './routes/signalCoordinationRoutes.js';
 import challanRoutes from './routes/challanRoutes.js';
+import adminReportsRoutes from './routes/adminReports.js';
 import emergencyVehicleRoutes from './routes/emergencyRoutes.js';
 import { initializeTrafficSimulation } from './services/trafficSimulator.js';
 import User from './models/User.js';
@@ -107,6 +108,9 @@ app.use('/api/signal-coordination', signalCoordinationRoutes);
 
 // Challan management and payment
 app.use('/api/challans', challanRoutes);
+
+// Admin reports and daily analytics
+app.use('/api/admin-reports', adminReportsRoutes);
 
 // Emergency vehicle detection and green corridor management
 app.use('/api/emergency-vehicles', emergencyVehicleRoutes);

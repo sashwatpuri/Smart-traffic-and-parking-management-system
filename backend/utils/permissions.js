@@ -17,6 +17,7 @@ export const PERMISSIONS_BY_ROLE = {
     'payment:create:any',
     'payment:view:any',
     'audit:read',
+    'admin:read',
     'road-issues:read',
     'road-issues:write'
   ],
