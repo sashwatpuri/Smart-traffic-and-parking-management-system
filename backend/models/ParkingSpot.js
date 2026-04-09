@@ -47,6 +47,37 @@ const parkingSpotSchema = new mongoose.Schema(
       default: 20,
       min: 0
     },
+    // Shadow parking with premium pricing
+    isShadowParking: {
+      type: Boolean,
+      default: false
+    },
+    shadowPremium: {
+      type: Number,
+      default: 0.25, // 25% premium over base price
+      min: 0,
+      max: 1
+    },
+    // Amenities near this spot
+    amenities: [{
+      type: String,
+      enum: ['ev_charging', 'cng_station', 'petrol_station', 'diesel_station', 'garage', 'car_wash']
+    }],
+    // Special features
+    features: [{
+      type: String
+    }],
+    // Customer rating
+    rating: {
+      type: Number,
+      min: 0,
+      max: 5,
+      default: 0
+    },
+    ratingCount: {
+      type: Number,
+      default: 0
+    },
     currency: {
       type: String,
       default: 'INR'

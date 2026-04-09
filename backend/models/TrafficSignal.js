@@ -69,6 +69,27 @@ const trafficSignalSchema = new mongoose.Schema(
       peakHour: Number,
       totalVehiclesToday: { type: Number, default: 0 }
     },
+    // Weather-based adaptive timing metrics
+    weatherMetrics: {
+      temperature: Number,
+      humidity: Number,
+      rainIntensity: Number, // 0-100
+      windSpeed: Number,
+      weatherCondition: String, // 'clear', 'rainy', 'cloudy', etc.
+      lastWeatherUpdate: Date,
+      timingAdjustment: {
+        reason: String,
+        greenAdjustment: { type: Number, default: 0 },
+        yellowAdjustment: { type: Number, default: 0 },
+        redAdjustment: { type: Number, default: 0 }
+      }
+    },
+    // Zone synchronization
+    syncedZone: {
+      type: String,
+      uppercase: true
+    },
+    syncedAt: Date,
     lastUpdated: {
       type: Date,
       default: Date.now,
