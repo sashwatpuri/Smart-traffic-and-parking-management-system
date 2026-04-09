@@ -68,9 +68,9 @@ router.get('/daily-stats', authMiddleware, requirePermission('admin:read'), asyn
       stats,
       areaStats,
       details: {
-        fines: fines.map(f => ({ id: f.fineId, type: f.violationType, amount: f.amount, status: f.status, location: f.location?.name })),
+        fines: fines.map(f => ({ id: f.fineId, type: f.violationType, amount: f.amount, status: f.status, location: f.location?.name, vehicle: f.vehicleNumber })),
         bookings: bookings.map(b => ({ id: b.bookingId, vehicle: b.vehicleNumber, spot: b.spotId, amount: b.totalAmount, status: b.status })),
-        roadIssues: roadIssues.map(i => ({ id: i._id, type: i.type, status: i.status, location: i.locationName })),
+        roadIssues: roadIssues.map(i => ({ id: i._id, type: i.issueType, status: i.status, location: i.locationName })),
         illegalParkings: illegalParkings.map(p => ({ id: p._id, plate: p.licensePlate, location: p.location, type: p.violationType }))
       }
     });
