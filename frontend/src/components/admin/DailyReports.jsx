@@ -12,7 +12,8 @@ import {
   IndianRupee,
   Clock,
   Filter,
-  Activity
+  Activity,
+  ParkingCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
