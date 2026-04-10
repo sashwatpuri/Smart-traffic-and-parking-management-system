@@ -18,9 +18,9 @@ export default function TrafficMonitoring() {
     { id: 3, name: 'Virat Mall - Hotgi Road', latitude: 17.6710335, longitude: 75.9418596, vehicles: 756, congestion: 'MEDIUM', signal: 'Red', timer: 60, cam: 'CAM-VJP-003', videoUrl: '/videos/video_2.mp4' },
     { id: 4, name: 'City Pride - GMR Mall Area', latitude: 17.6743, longitude: 75.9138, vehicles: 1204, congestion: 'HIGH', signal: 'Green', timer: 30, cam: 'CAM-HWY-004', videoUrl: '/videos/video_3.mp4' },
     { id: 5, name: 'Soham Mall - Hospital Stretch', latitude: 17.6644158, longitude: 75.9126046, vehicles: 210, congestion: 'LOW', signal: 'Red', timer: 25, cam: 'CAM-CVL-005', videoUrl: '/videos/video_4.mp4' },
-    { id: 6, name: 'Bhuikot Fort - Siddheshwar Area', latitude: 17.6744887, longitude: 75.9021219, vehicles: 950, congestion: 'HIGH', signal: 'Yellow', timer: 5, cam: 'CAM-SQR-006' },
-    { id: 7, name: 'Solapur Cancer Center Junction', latitude: 17.656601, longitude: 75.896723, vehicles: 640, congestion: 'MEDIUM', signal: 'Green', timer: 50, cam: 'CAM-ITP-007' },
-    { id: 8, name: 'Bharat Mata Nagar - Gangji Mill', latitude: 17.6284768, longitude: 75.9298602, vehicles: 112, congestion: 'LOW', signal: 'Green', timer: 10, cam: 'CAM-BPS-008' }
+    { id: 6, name: 'Bhuikot Fort - Siddheshwar Area', latitude: 17.6744887, longitude: 75.9021219, vehicles: 950, congestion: 'HIGH', signal: 'Yellow', timer: 5, cam: 'CAM-SQR-006', videoUrl: '/videos/video_3.mp4' },
+    { id: 7, name: 'Solapur Cancer Center Junction', latitude: 17.656601, longitude: 75.896723, vehicles: 640, congestion: 'MEDIUM', signal: 'Green', timer: 50, cam: 'CAM-ITP-007', videoUrl: '/videos/video_2.mp4' },
+    { id: 8, name: 'Bharat Mata Nagar - Gangji Mill', latitude: 17.6284768, longitude: 75.9298602, vehicles: 112, congestion: 'LOW', signal: 'Green', timer: 10, cam: 'CAM-BPS-008', videoUrl: '/videos/video_4.mp4' }
   ]);
 
   // Selected zone to display in the main monitor
