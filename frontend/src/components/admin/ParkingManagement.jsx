@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
+import { io } from 'socket.io-client';
 
 const LANE_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
 
@@ -66,11 +67,36 @@ export default function ParkingManagement() {
   const [showAllViolations, setShowAllViolations] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [realViolations, setRealViolations] = useState([]);
+  const [stats, setStats] = useState({ totalZones: 0, illegalParkingAlerts: 0, revenue: '₹0.0K' });
 
   useEffect(() => {
     fetchSpots();
-    const interval = setInterval(fetchSpots, 15000);
-    return () => clearInterval(interval);
+    fetchViolations();
+    fetchStats();
+    
+    const socket = io('http://localhost:5000');
+    
+    socket.on('illegal-parking-detected', () => {
+      fetchViolations();
+      fetchStats();
+    });
+
+    socket.on('illegal-parking-fine-issued', () => {
+      fetchViolations();
+      fetchStats();
+    });
+
+    const interval = setInterval(() => {
+      fetchSpots();
+      fetchViolations();
+      fetchStats();
+    }, 15000);
+
+    return () => {
+      clearInterval(interval);
+      socket.disconnect();
+    };
   }, []);
 
   const fetchSpots = async () => {
@@ -85,6 +111,27 @@ export default function ParkingManagement() {
       console.error('Failed to load spots', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchViolations = async () => {
+    try {
+      const { data } = await axios.get('/api/illegal-parking');
+      setRealViolations(data);
+    } catch (err) {
+      console.error('Failed to load violations', err);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const { data } = await axios.get('/api/illegal-parking/stats/summary');
+      setStats({
+        illegalParkingAlerts: data.total,
+        revenue: `₹${(data.collectedAmount / 1000).toFixed(1)}K`
+      });
+    } catch (err) {
+      console.error('Failed to load stats', err);
     }
   };
 
@@ -145,17 +192,19 @@ export default function ParkingManagement() {
   ], [activeZoneName, zoneNum]);
 
   const violations = useMemo(() => {
-    const n = Number(zoneNum);
-    return Array.from({ length: 3 + (n % 4) }).map((_, v) => ({
-      slot: `Z${zoneNum}-${['A', 'B', 'C', 'D'][v % 4]}${String(v + 1).padStart(2, '0')}`,
-      vehicleNo: v % 2 === 0 ? 'UNKNOWN' : `MH-13-KL-${5500 + n * 10 + v}`,
-      duration: `${15 + v * 10}m`,
-      status: v % 2 === 0 ? 'Alert Sent' : 'Pending',
+    // Filter real violations by location/zone if needed, or show all categorized
+    return realViolations.map(v => ({
+      id: v.id,
+      slot: v.cameraId || 'N/A',
+      vehicleNo: v.licensePlate,
+      duration: v.location, // Using location as duration label since local duration isn't clearly in model
+      status: v.status.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' '),
+      time: new Date(v.detectionTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }));
-  }, [zoneNum]);
+  }, [realViolations]);
 
-  const illegalAlerts = violations.length + 10 + Number(zoneNum) * 2;
-  const revenue = `₹${(20 + Number(zoneNum) * 5.5).toFixed(1)}K`;
+  const illegalAlerts = stats.illegalParkingAlerts;
+  const revenue = stats.revenue;
 
   if (loading) {
     return (
@@ -291,9 +340,9 @@ export default function ParkingManagement() {
               <table className="w-full text-left text-sm min-w-[400px]">
                 <thead>
                   <tr className="border-b border-gray-100 text-gray-400 uppercase tracking-wider text-xs">
-                    <th className="pb-3 font-semibold">Slot</th>
+                    <th className="pb-3 font-semibold">Camera ID</th>
                     <th className="pb-3 font-semibold">Vehicle No.</th>
-                    <th className="pb-3 font-semibold">Duration</th>
+                    <th className="pb-3 font-semibold">Location</th>
                     <th className="pb-3 font-semibold text-right">Status</th>
                   </tr>
                 </thead>
@@ -354,9 +403,9 @@ export default function ParkingManagement() {
               <table className="w-full text-left text-sm min-w-[400px]">
                 <thead className="sticky top-0 bg-white shadow-[0_4px_6px_-6px_rgba(0,0,0,0.1)]">
                   <tr className="border-b border-gray-100 text-gray-400 uppercase tracking-wider text-xs">
-                    <th className="pb-3 pt-2 font-semibold">Slot</th>
+                    <th className="pb-3 pt-2 font-semibold">Camera ID</th>
                     <th className="pb-3 pt-2 font-semibold">Vehicle No.</th>
-                    <th className="pb-3 pt-2 font-semibold">Duration</th>
+                    <th className="pb-3 pt-2 font-semibold">Location</th>
                     <th className="pb-3 pt-2 font-semibold text-right">Status</th>
                     <th className="pb-3 pt-2 font-semibold text-right">Action</th>
                   </tr>

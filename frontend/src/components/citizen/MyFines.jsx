@@ -33,51 +33,12 @@ export default function MyFines() {
   const fetchFines = async () => {
     try {
       const { data } = await axios.get('/api/fines');
-      
-      // If backend is empty OR fails, inject high-fidelity mock violations for presentation/demo
-      if (data.length === 0) {
-         setFines(getMockFines());
-      } else {
-         setFines(data);
-      }
+      setFines(data);
     } catch (error) {
-      console.error('Error loading fines, falling back to mock data...');
-      setFines(getMockFines());
+      console.error('Error loading fines:', error);
+      toast.error('Failed to load real-time violation data');
     }
   };
-
-  const getMockFines = () => [
-    {
-       _id: 'mock-fine-1',
-       fineId: 'FINE-SLP-8821',
-       violationType: 'high_speed',
-       amount: 2000,
-       location: { name: 'Siddheshwar Temple Road' },
-       status: 'pending',
-       vehicleNumber: 'MH-13-BN-4452',
-       issuedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-       _id: 'mock-fine-2',
-       fineId: 'FINE-SLP-5590',
-       violationType: 'no_helmet',
-       amount: 500,
-       location: { name: 'Balives Junction' },
-       status: 'pending',
-       vehicleNumber: 'MH-13-BN-4452',
-       issuedAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
-    },
-    {
-       _id: 'mock-fine-3',
-       fineId: 'FINE-SLP-1204',
-       violationType: 'illegal_parking',
-       amount: 1200,
-       location: { name: 'Saat Rasta' },
-       status: 'pending',
-       vehicleNumber: 'MH-13-BN-4452',
-       issuedAt: new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString()
-    }
- ];
 
   useEffect(() => {
     fetchFines();
