@@ -29,7 +29,7 @@ export const env = {
   PORT: Number(process.env.PORT || 5000),
   MONGODB_URI: process.env.MONGODB_URI,
   CORS_ORIGIN: nodeEnv === 'production' 
-    ? process.env.CORS_ORIGIN || 'https://yourdomain.com'
+    ? process.env.CORS_ORIGIN || 'https://smarttraffic-ten.vercel.app'
     : process.env.CORS_ORIGIN || '*',
 
   JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET,

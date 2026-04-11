@@ -4,6 +4,10 @@ import axios from 'axios';
 import App from './App';
 import './index.css';
 
+// Configure backend URL from environment or default to localhost
+const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+axios.defaults.baseURL = API_BASE;
+
 // Configure axios globally BEFORE rendering App
 let refreshRequest = null;
 

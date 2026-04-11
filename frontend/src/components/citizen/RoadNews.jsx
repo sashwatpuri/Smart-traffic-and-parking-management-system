@@ -25,8 +25,11 @@ export default function RoadNews() {
   useEffect(() => {
     fetchIssues();
     
-    // Connect to local socket
-    const socket = io('http://localhost:5001');
+    // Connect to backend socket
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+    const socket = io(backendUrl, {
+      transports: ['websocket', 'polling']
+    });
     
     // Listen for new items or status changes in real-time
     socket.on('new-road-issue', (data) => {

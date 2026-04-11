@@ -42,7 +42,10 @@ export default function MyFines() {
 
   useEffect(() => {
     fetchFines();
-    const socket = io('http://localhost:5001');
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+    const socket = io(backendUrl, {
+      transports: ['websocket', 'polling']
+    });
     socket.on('new-fine', () => fetchFines());
     socket.on('fine-updated', () => fetchFines());
     return () => socket.disconnect();

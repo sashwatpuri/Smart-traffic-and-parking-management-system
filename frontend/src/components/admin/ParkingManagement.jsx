@@ -75,7 +75,10 @@ export default function ParkingManagement() {
     fetchViolations();
     fetchStats();
     
-    const socket = io('http://localhost:5000');
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+    const socket = io(backendUrl, {
+      transports: ['websocket', 'polling']
+    });
     
     socket.on('illegal-parking-detected', () => {
       fetchViolations();
