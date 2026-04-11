@@ -26,6 +26,7 @@ import adminReportsRoutes from './routes/adminReports.js';
 import emergencyVehicleRoutes from './routes/emergencyRoutes.js';
 import parkingAmenitiesRoutes from './routes/parkingAmenities.js';
 import { initializeTrafficSimulation } from './services/trafficSimulator.js';
+import { ensureUploadDirs } from './services/uploadService.js';
 import User from './models/User.js';
 import { env } from './config/env.js';
 
@@ -64,6 +65,10 @@ app.post(
 // Increase JSON body size limit to handle base64 encoded images/video frames
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Ensure required directories exist
+ensureUploadDirs();
+
 app.use('/public', express.static('public'));
 app.use('/uploads', express.static('uploads'));
 
@@ -148,25 +153,68 @@ httpServer.on('error', (error) => {
 });
 
 async function startServer() {
-  await mongoose.connect(env.MONGODB_URI);
-  console.log('MongoDB connected');
+  try {
+    // Validate required environment variables BEFORE connecting
+    const requiredEnvVars = ['MONGODB_URI', 'JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'];
+    const missing = requiredEnvVars.filter(key => !process.env[key]);
+    
+    if (missing.length > 0) {
+      throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+    }
 
-  await seedDefaultUsers();
-  await initializeTrafficSimulation(io);
+    // Connect to MongoDB with retry logic
+    console.log('🔌 Connecting to MongoDB...');
+    await mongoose.connect(env.MONGODB_URI, {
+      connectTimeoutMS: 10000,
+      serverSelectionTimeoutMS: 10000,
+      retryWrites: true,
+      maxPoolSize: 10
+    });
+    console.log('✅ MongoDB connected successfully');
 
-  httpServer.listen(env.PORT, () => {
-    console.log(`====================================================`);
-    console.log(`🚀 SOLAPUR SMART CITY SERVER RUNNING ON PORT ${env.PORT}`);
-    console.log(`📡 REAL-TIME SOCKET.IO ENGINE: [ONLINE]`);
-    console.log(`💳 PAYMENT GATEWAY (${env.PAYMENT_PROVIDER}): [ACTIVE]`);
-    console.log(`🌍 CITY TRAFFIC SIMULATION: [LOADED]`);
-    console.log(`====================================================`);
-  });
+    await seedDefaultUsers();
+    await initializeTrafficSimulation(io);
+
+    const server = httpServer.listen(env.PORT, '0.0.0.0', () => {
+      console.log('====================================================');
+      console.log(`✅ SERVER RUNNING ON PORT ${env.PORT}`);
+      console.log(`📡 Socket.IO: ONLINE`);
+      console.log(`💳 Payment Provider: ${env.PAYMENT_PROVIDER}`);
+      console.log(`🌍 Traffic Simulation: LOADED`);
+      console.log('====================================================');
+    });
+
+    // Graceful shutdown handlers
+    const shutdown = async (signal) => {
+      console.log(`\n📤 Received ${signal}, shutting down gracefully...`);
+      server.close(async () => {
+        try {
+          await mongoose.disconnect();
+          console.log('✅ Server closed successfully');
+          process.exit(0);
+        } catch (error) {
+          console.error('Error during shutdown:', error);
+          process.exit(1);
+        }
+      });
+      
+      // Force exit after 10 seconds
+      setTimeout(() => {
+        console.error('❌ Force closing server after timeout');
+        process.exit(1);
+      }, 10000);
+    };
+
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT', () => shutdown('SIGINT'));
+
+  } catch (error) {
+    console.error('❌ Server startup failed:', error.message);
+    console.error(error.stack);
+    process.exit(1);
+  }
 }
 
-startServer().catch((error) => {
-  console.error('Server startup failed:', error);
-  process.exit(1);
-});
+startServer();
 
 export { io };

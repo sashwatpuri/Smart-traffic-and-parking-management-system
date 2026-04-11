@@ -28,7 +28,9 @@ export const env = {
   NODE_ENV: nodeEnv,
   PORT: Number(process.env.PORT || 5000),
   MONGODB_URI: process.env.MONGODB_URI,
-  CORS_ORIGIN: process.env.CORS_ORIGIN || '*',
+  CORS_ORIGIN: nodeEnv === 'production' 
+    ? process.env.CORS_ORIGIN || 'https://yourdomain.com'
+    : process.env.CORS_ORIGIN || '*',
 
   JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET,
   JWT_ACCESS_TTL: process.env.JWT_ACCESS_TTL || '15m',
