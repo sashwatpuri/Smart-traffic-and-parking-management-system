@@ -162,15 +162,35 @@ async function startServer() {
       throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
     }
 
-    // Connect to MongoDB with retry logic
+    // Connect to MongoDB with detailed error handling
     console.log('🔌 Connecting to MongoDB...');
-    await mongoose.connect(env.MONGODB_URI, {
-      connectTimeoutMS: 10000,
-      serverSelectionTimeoutMS: 10000,
-      retryWrites: true,
-      maxPoolSize: 10
-    });
-    console.log('✅ MongoDB connected successfully');
+    console.log('📍 URI:', env.MONGODB_URI.split('@')[0] + '@' + (env.MONGODB_URI.split('@')[1] ? env.MONGODB_URI.split('@')[1].substring(0, 20) + '...' : 'unknown'));
+    
+    try {
+      const connectPromise = mongoose.connect(env.MONGODB_URI, {
+        connectTimeoutMS: 15000,
+        serverSelectionTimeoutMS: 15000,
+        socketTimeoutMS: 45000,
+        retryWrites: true,
+        maxPoolSize: 10,
+        family: 4 // Use IPv4
+      });
+
+      // Add timeout fallback
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('MongoDB connection timeout (15s)')), 16000)
+      );
+
+      await Promise.race([connectPromise, timeoutPromise]);
+      console.log('✅ MongoDB connected successfully');
+    } catch (dbError) {
+      console.error('❌ MongoDB Connection Error:', dbError.message);
+      console.error('📝 Connection Details:');
+      console.error('   - MONGODB_URI set:', !!process.env.MONGODB_URI);
+      console.error('   - Error type:', dbError.name);
+      console.error('   - Full error:', dbError.toString());
+      throw dbError;
+    }
 
     await seedDefaultUsers();
     await initializeTrafficSimulation(io);
