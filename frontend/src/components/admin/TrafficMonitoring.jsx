@@ -154,29 +154,49 @@ export default function TrafficMonitoring() {
           <div className="bg-[#1E293B] rounded-lg shadow-md h-full min-h-[400px] flex items-center justify-center relative overflow-hidden group border border-slate-700">
             {/* The Video Element */}
             <video 
-               key={activeZone?.videoUrl || activeZone?.id}
-               src={activeZone?.videoUrl || "/videos/Hikvision_Traffic_Flow_Analysis_Camera_240P.mp4"} 
+               key={activeZone?.videoUrl + "-" + (activeZone?.id || 0)}
+               src={activeZone?.videoUrl} 
                autoPlay 
                loop 
                muted 
                playsInline
                className="object-cover w-full h-full absolute inset-0 z-0"
                onError={(e) => {
-                 console.error('Video load failed:', e.target.src);
-                 const fallback = e.target.parentElement.querySelector('.video-fallback');
-                 if (fallback) fallback.style.display = 'flex';
-                 e.target.style.display = 'none';
+                 console.error('Video primary source failed, trying fallback:', e.target.src);
+                 // Fallback to a very stable sample URL if the specific one fails
+                 if (e.target.src !== 'https://www.w3schools.com/html/mov_bbb.mp4') {
+                   e.target.src = 'https://www.w3schools.com/html/mov_bbb.mp4';
+                 } else {
+                   const fallback = e.target.parentElement.querySelector('.video-fallback');
+                   if (fallback) fallback.style.display = 'flex';
+                   e.target.style.display = 'none';
+                 }
                }}
             />
+            {/* Dark gradient overlay to make text readable */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40 z-0"></div>
             
+            {/* Quick Refresh Button for Video */}
+            <button 
+              onClick={() => {
+                const video = document.querySelector('video');
+                if (video) {
+                  video.load();
+                  video.play();
+                }
+              }}
+              className="absolute top-4 right-20 z-10 bg-black/50 hover:bg-black/80 text-white p-1.5 rounded-md border border-slate-600 transition-all"
+              title="Refresh Feed"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            </button>
+
             {/* Video Fallback Placeholder (when file not found) */}
             <div className="video-fallback absolute inset-0 z-0 bg-[#0F172A] hidden flex-col items-center justify-center text-center p-6">
                <Camera className="w-16 h-16 text-slate-700 mb-4" />
                <p className="text-slate-400 font-medium">CCTV Feed Temporarily Unavailable</p>
                <p className="text-slate-600 text-xs mt-1">Connecting to alternative high-bandwidth channel...</p>
             </div>
-            {/* Dark gradient overlay to make text readable */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40 z-0"></div>
 
             {/* Top Left Label */}
             <div className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-[#0F172A]/90 backdrop-blur-md px-3 py-1.5 rounded-md border border-slate-600 shadow-lg">
