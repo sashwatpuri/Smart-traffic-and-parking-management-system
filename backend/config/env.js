@@ -28,9 +28,12 @@ export const env = {
   NODE_ENV: nodeEnv,
   PORT: Number(process.env.PORT || 5000),
   MONGODB_URI: process.env.MONGODB_URI,
-  CORS_ORIGIN: nodeEnv === 'production' 
+  CORS_ORIGIN: (nodeEnv === 'production' 
     ? process.env.CORS_ORIGIN || 'https://smarttraffic-ten.vercel.app'
-    : process.env.CORS_ORIGIN || '*',
+    : process.env.CORS_ORIGIN || '*')
+    .split(',')
+    .map(origin => origin.trim())
+    .length === 1 && (process.env.CORS_ORIGIN || '*') === '*' ? '*' : (process.env.CORS_ORIGIN || (nodeEnv === 'production' ? 'https://smarttraffic-ten.vercel.app' : '*')).split(',').map(o => o.trim()),
 
   JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET,
   JWT_ACCESS_TTL: process.env.JWT_ACCESS_TTL || '15m',
