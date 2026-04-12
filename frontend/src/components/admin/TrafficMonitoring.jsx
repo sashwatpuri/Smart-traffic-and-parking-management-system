@@ -13,14 +13,14 @@ export default function TrafficMonitoring() {
 
   // States of each zone
   const [zones, setZones] = useState([
-    { id: 1, name: 'Oasis Mall Area', latitude: 17.676673, longitude: 75.8986813, vehicles: 342, congestion: 'LOW', signal: 'Green', timer: 45, cam: 'CAM-STN-001', videoUrl: '/videos/Hikvision_Traffic_Flow_Analysis_Camera_240P.mp4' },
-    { id: 2, name: 'Park Shopping Complex - City Corner', latitude: 17.6796, longitude: 75.9088, vehicles: 890, congestion: 'MEDIUM', signal: 'Red', timer: 15, cam: 'CAM-MKT-002', videoUrl: '/videos/Vehicle Detection and Traffic Counting using AI..mp4' },
-    { id: 3, name: 'Virat Mall - Hotgi Road', latitude: 17.6710335, longitude: 75.9418596, vehicles: 756, congestion: 'MEDIUM', signal: 'Red', timer: 60, cam: 'CAM-VJP-003', videoUrl: '/videos/video_2.mp4' },
-    { id: 4, name: 'City Pride - GMR Mall Area', latitude: 17.6743, longitude: 75.9138, vehicles: 1204, congestion: 'HIGH', signal: 'Green', timer: 30, cam: 'CAM-HWY-004', videoUrl: '/videos/video_3.mp4' },
-    { id: 5, name: 'Soham Mall - Hospital Stretch', latitude: 17.6644158, longitude: 75.9126046, vehicles: 210, congestion: 'LOW', signal: 'Red', timer: 25, cam: 'CAM-CVL-005', videoUrl: '/videos/video_4.mp4' },
-    { id: 6, name: 'Bhuikot Fort - Siddheshwar Area', latitude: 17.6744887, longitude: 75.9021219, vehicles: 950, congestion: 'HIGH', signal: 'Yellow', timer: 5, cam: 'CAM-SQR-006', videoUrl: '/videos/video_3.mp4' },
-    { id: 7, name: 'Solapur Cancer Center Junction', latitude: 17.656601, longitude: 75.896723, vehicles: 640, congestion: 'MEDIUM', signal: 'Green', timer: 50, cam: 'CAM-ITP-007', videoUrl: '/videos/video_2.mp4' },
-    { id: 8, name: 'Bharat Mata Nagar - Gangji Mill', latitude: 17.6284768, longitude: 75.9298602, vehicles: 112, congestion: 'LOW', signal: 'Green', timer: 10, cam: 'CAM-BPS-008', videoUrl: '/videos/video_4.mp4' }
+    { id: 1, name: 'Oasis Mall Area', latitude: 17.676673, longitude: 75.8986813, vehicles: 342, congestion: 'LOW', signal: 'Green', timer: 45, cam: 'CAM-STN-001', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-traffic-at-night-in-a-busy-city-1860-large.mp4' },
+    { id: 2, name: 'Park Shopping Complex - City Corner', latitude: 17.6796, longitude: 75.9088, vehicles: 890, congestion: 'MEDIUM', signal: 'Red', timer: 15, cam: 'CAM-MKT-002', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-time-lapse-of-a-busy-city-street-junction-at-night-34135-large.mp4' },
+    { id: 3, name: 'Virat Mall - Hotgi Road', latitude: 17.6710335, longitude: 75.9418596, vehicles: 756, congestion: 'MEDIUM', signal: 'Red', timer: 60, cam: 'CAM-VJP-003', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-city-traffic-and-street-lights-at-night-33318-large.mp4' },
+    { id: 4, name: 'City Pride - GMR Mall Area', latitude: 17.6743, longitude: 75.9138, vehicles: 1204, congestion: 'HIGH', signal: 'Green', timer: 30, cam: 'CAM-HWY-004', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-busy-city-street-with-traffic-and-pedestrians-at-night-33319-large.mp4' },
+    { id: 5, name: 'Soham Mall - Hospital Stretch', latitude: 17.6644158, longitude: 75.9126046, vehicles: 210, congestion: 'LOW', signal: 'Red', timer: 25, cam: 'CAM-CVL-005', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-urban-traffic-at-night-in-the-city-1859-large.mp4' },
+    { id: 6, name: 'Bhuikot Fort - Siddheshwar Area', latitude: 17.6744887, longitude: 75.9021219, vehicles: 950, congestion: 'HIGH', signal: 'Yellow', timer: 5, cam: 'CAM-SQR-006', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-traffic-in-a-large-city-at-night-1858-large.mp4' },
+    { id: 7, name: 'Solapur Cancer Center Junction', latitude: 17.656601, longitude: 75.896723, vehicles: 640, congestion: 'MEDIUM', signal: 'Green', timer: 50, cam: 'CAM-ITP-007', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-city-traffic-at-night-in-time-lapse-1857-large.mp4' },
+    { id: 8, name: 'Bharat Mata Nagar - Gangji Mill', latitude: 17.6284768, longitude: 75.9298602, vehicles: 112, congestion: 'LOW', signal: 'Green', timer: 10, cam: 'CAM-BPS-008', videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-cars-driving-on-a-city-street-at-night-1856-large.mp4' }
   ]);
 
   // Selected zone to display in the main monitor
