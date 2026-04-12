@@ -68,8 +68,8 @@ export default function CitizenDashboard({ user, onLogout }) {
               <ParkingCircle className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent uppercase tracking-tighter">
-                Solapur Smart City
+              <h1 className="text-xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent uppercase tracking-tighter">
+                UrbanSaathi
               </h1>
             </div>
           </div>

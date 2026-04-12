@@ -5,7 +5,16 @@ import IllegalParking from '../models/IllegalParking.js';
 import ParkingBooking from '../models/ParkingBooking.js';
 import RoadIssue from '../models/RoadIssue.js';
 
-const MONGODB_URI = 'mongodb://localhost:27017/traffic_management';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Load .env from the root directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '../.env') });
+
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/traffic_management';
 
 async function seedReportsData() {
   try {
