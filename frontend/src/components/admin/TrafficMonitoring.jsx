@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, Bot } from 'lucide-react';
+import { AlertTriangle, Bot, Camera } from 'lucide-react';
 
 export default function TrafficMonitoring() {
   // Global control mode state
