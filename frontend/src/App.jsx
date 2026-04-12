@@ -22,7 +22,7 @@ function App() {
 
 
   useEffect(() => {
-    const socket = io('http://localhost:5001', {
+    const socket = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001', {
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,

@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { Camera, MapPin, FileText, AlertTriangle, Car, Image as ImageIcon, Store, CheckCircle, UploadCloud } from 'lucide-react';
 
 export default function ReportViolation() {
+  const API_BASE = import.meta.env.VITE_BACKEND_URL || '';
   const [reportType, setReportType] = useState('parking'); // 'parking' | 'hawker'
   const [vehicleNumber, setVehicleNumber] = useState('');
   const [vehicleType, setVehicleType] = useState('Car');
@@ -42,8 +43,8 @@ export default function ReportViolation() {
     
     try {
       const endpoint = reportType === 'parking' 
-        ? '/api/illegal-parking/citizen-report' 
-        : '/api/encroachments/citizen-report';
+        ? `${API_BASE}/api/illegal-parking/citizen-report` 
+        : `${API_BASE}/api/encroachments/citizen-report`;
         
       const payload = {
          location,

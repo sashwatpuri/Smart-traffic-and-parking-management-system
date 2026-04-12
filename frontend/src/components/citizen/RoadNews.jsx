@@ -26,7 +26,7 @@ export default function RoadNews() {
     fetchIssues();
     
     // Connect to backend socket
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
     const socket = io(backendUrl, {
       transports: ['websocket', 'polling']
     });

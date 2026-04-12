@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Camera, AlertTriangle, MapPin, Clock, CheckCircle, XCircle, Bot } from 'lucide-react';
 
 export default function EncroachmentMonitoring() {
+  const API_BASE = import.meta.env.VITE_BACKEND_URL || '';
   const [encroachments, setEncroachments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -15,7 +16,7 @@ export default function EncroachmentMonitoring() {
 
   const fetchEncroachments = async () => {
     try {
-      const response = await fetch('/api/encroachments', {
+      const response = await fetch(`${API_BASE}/api/encroachments`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -35,7 +36,7 @@ export default function EncroachmentMonitoring() {
 
   const handleResolve = async (id) => {
     try {
-      await fetch(`/api/encroachments/${id}/resolve`, {
+      await fetch(`${API_BASE}/api/encroachments/${id}/resolve`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -50,7 +51,7 @@ export default function EncroachmentMonitoring() {
 
   const handleIgnore = async (id) => {
     try {
-      await fetch(`/api/encroachments/${id}/ignore`, {
+      await fetch(`${API_BASE}/api/encroachments/${id}/ignore`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,

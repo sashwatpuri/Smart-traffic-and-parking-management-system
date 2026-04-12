@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Camera, AlertTriangle, MapPin, Clock, DollarSign, Phone, CheckCircle, XCircle, Bell, FileText } from 'lucide-react';
 
 export default function IllegalParkingDetection() {
+  const API_BASE = import.meta.env.VITE_BACKEND_URL || '';
   const [violations, setViolations] = useState([]);
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
@@ -20,7 +21,7 @@ export default function IllegalParkingDetection() {
 
   const fetchViolations = async () => {
     try {
-      const response = await fetch('/api/illegal-parking', {
+      const response = await fetch(`${API_BASE}/api/illegal-parking`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -40,7 +41,7 @@ export default function IllegalParkingDetection() {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('/api/illegal-parking/stats/summary', {
+      const response = await fetch(`${API_BASE}/api/illegal-parking/stats/summary`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -58,7 +59,7 @@ export default function IllegalParkingDetection() {
 
   const handleSendAlert = async (id) => {
     try {
-      await fetch(`/api/illegal-parking/${id}/send-alert`, {
+      await fetch(`${API_BASE}/api/illegal-parking/${id}/send-alert`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -73,7 +74,7 @@ export default function IllegalParkingDetection() {
 
   const handleIssueFine = async (id) => {
     try {
-      await fetch(`/api/illegal-parking/${id}/issue-fine`, {
+      await fetch(`${API_BASE}/api/illegal-parking/${id}/issue-fine`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -89,7 +90,7 @@ export default function IllegalParkingDetection() {
 
   const handleDismiss = async (id) => {
     try {
-      await fetch(`/api/illegal-parking/${id}/dismiss`, {
+      await fetch(`${API_BASE}/api/illegal-parking/${id}/dismiss`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
