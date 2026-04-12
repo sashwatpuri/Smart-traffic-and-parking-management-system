@@ -159,11 +159,22 @@ export default function TrafficMonitoring() {
                autoPlay 
                loop 
                muted 
+               playsInline
                className="object-cover w-full h-full absolute inset-0 z-0"
                onError={(e) => {
+                 console.error('Video load failed:', e.target.src);
+                 const fallback = e.target.parentElement.querySelector('.video-fallback');
+                 if (fallback) fallback.style.display = 'flex';
                  e.target.style.display = 'none';
                }}
             />
+            
+            {/* Video Fallback Placeholder (when file not found) */}
+            <div className="video-fallback absolute inset-0 z-0 bg-[#0F172A] hidden flex-col items-center justify-center text-center p-6">
+               <Camera className="w-16 h-16 text-slate-700 mb-4" />
+               <p className="text-slate-400 font-medium">CCTV Feed Temporarily Unavailable</p>
+               <p className="text-slate-600 text-xs mt-1">Connecting to alternative high-bandwidth channel...</p>
+            </div>
             {/* Dark gradient overlay to make text readable */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40 z-0"></div>
 
