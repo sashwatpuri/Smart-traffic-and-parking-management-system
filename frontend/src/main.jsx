@@ -8,10 +8,6 @@ import './index.css';
 const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 axios.defaults.baseURL = API_BASE;
 
-if (!import.meta.env.VITE_BACKEND_URL && window.location.hostname !== 'localhost') {
-  console.warn('⚠️ VITE_BACKEND_URL is not set. Frontend might fail to connect to backend.');
-}
-
 // Configure axios globally BEFORE rendering App
 let refreshRequest = null;
 
