@@ -13,8 +13,8 @@ export default function TrafficMonitoring() {
 
   // States of each zone
   const [zones, setZones] = useState([
-    { id: 1, name: 'Oasis Mall Area', latitude: 17.676673, longitude: 75.8986813, vehicles: 342, congestion: 'LOW', signal: 'Green', timer: 45, cam: 'CAM-STN-001', videoUrl: '/videos/Hikvision_Traffic_Flow_Analysis_Camera_240P.mp4' },
-    { id: 2, name: 'Park Shopping Complex - City Corner', latitude: 17.6796, longitude: 75.9088, vehicles: 890, congestion: 'MEDIUM', signal: 'Red', timer: 15, cam: 'CAM-MKT-002', videoUrl: '/videos/Vehicle Detection and Traffic Counting using AI..mp4' },
+    { id: 1, name: 'Oasis Mall Area', latitude: 17.676673, longitude: 75.8986813, vehicles: 342, congestion: 'LOW', signal: 'Green', timer: 45, cam: 'CAM-STN-001', videoUrl: '/videos/traffic_flow.mp4' },
+    { id: 2, name: 'Park Shopping Complex - City Corner', latitude: 17.6796, longitude: 75.9088, vehicles: 890, congestion: 'MEDIUM', signal: 'Red', timer: 15, cam: 'CAM-MKT-002', videoUrl: '/videos/traffic_count.mp4' },
     { id: 3, name: 'Virat Mall - Hotgi Road', latitude: 17.6710335, longitude: 75.9418596, vehicles: 756, congestion: 'MEDIUM', signal: 'Red', timer: 60, cam: 'CAM-VJP-003', videoUrl: '/videos/video_2.mp4' },
     { id: 4, name: 'City Pride - GMR Mall Area', latitude: 17.6743, longitude: 75.9138, vehicles: 1204, congestion: 'HIGH', signal: 'Green', timer: 30, cam: 'CAM-HWY-004', videoUrl: '/videos/video_3.mp4' },
     { id: 5, name: 'Soham Mall - Hospital Stretch', latitude: 17.6644158, longitude: 75.9126046, vehicles: 210, congestion: 'LOW', signal: 'Red', timer: 25, cam: 'CAM-CVL-005', videoUrl: '/videos/video_4.mp4' },
