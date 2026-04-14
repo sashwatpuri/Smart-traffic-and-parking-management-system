@@ -19,14 +19,18 @@ const PARKING_ZONES = [
   { zoneId: 'HUB-BHUI', zone: 'Bhuikot Fort Area',       count: 168, pricePerHour: 30,  lat: 17.6710, lng: 75.9130 },
   { zoneId: 'HUB-HOTG', zone: 'Hotgi Road (Soham Mall)', count: 168, pricePerHour: 120, lat: 17.6600, lng: 75.9300 },
   { zoneId: 'HUB-STAN', zone: 'ST Stand (Central)',      count: 168, pricePerHour: 60,  lat: 17.6700, lng: 75.9000 },
-  { zoneId: 'ZONE-1',   zone: 'Zone 1',                  count: 120, pricePerHour: 20,  lat: 17.6750, lng: 75.9200 },
-  { zoneId: 'ZONE-2',   zone: 'Zone 2',                  count: 120, pricePerHour: 20,  lat: 17.6760, lng: 75.9210 },
-  { zoneId: 'ZONE-3',   zone: 'Zone 3',                  count: 120, pricePerHour: 25,  lat: 17.6770, lng: 75.9220 },
-  { zoneId: 'ZONE-4',   zone: 'Zone 4',                  count: 120, pricePerHour: 30,  lat: 17.6780, lng: 75.9230 },
-  { zoneId: 'ZONE-5',   zone: 'Zone 5',                  count: 120, pricePerHour: 35,  lat: 17.6790, lng: 75.9240 },
-  { zoneId: 'ZONE-6',   zone: 'Zone 6',                  count: 120, pricePerHour: 15,  lat: 17.6800, lng: 75.9250 },
-  { zoneId: 'ZONE-7',   zone: 'Zone 7',                  count: 120, pricePerHour: 10,  lat: 17.6810, lng: 75.9260 },
-  { zoneId: 'ZONE-8',   zone: 'Zone 8',                  count: 120, pricePerHour: 10,  lat: 17.6820, lng: 75.9270 }
+  { zoneId: 'HUB-MURAR', zone: 'Murarji Peth',           count: 168, pricePerHour: 45,  lat: 17.6755, lng: 75.9080 },
+  { zoneId: 'HUB-BUDHW', zone: 'Budhwar Peth',           count: 168, pricePerHour: 40,  lat: 17.6820, lng: 75.9150 },
+  { zoneId: 'HUB-SAAT', zone: 'Saat Rasta Junction',     count: 168, pricePerHour: 70,  lat: 17.6650, lng: 75.9080 },
+  { zoneId: 'HUB-COURT', zone: 'Civil Court Area',       count: 168, pricePerHour: 55,  lat: 17.6620, lng: 75.9120 },
+  { zoneId: 'HUB-SAMRA', zone: 'Samrat Chowk',           count: 168, pricePerHour: 50,  lat: 17.6850, lng: 75.9200 },
+  { zoneId: 'HUB-MARKT', zone: 'Market Yard',            count: 168, pricePerHour: 35,  lat: 17.6900, lng: 75.9300 },
+  { zoneId: 'HUB-VIJAY', zone: 'Vijaypur Road',          count: 168, pricePerHour: 40,  lat: 17.6500, lng: 75.9100 },
+  { zoneId: 'HUB-JULE',  zone: 'Jule Solapur',           count: 168, pricePerHour: 65,  lat: 17.6450, lng: 75.8900 },
+  { zoneId: 'HUB-BHAVA', zone: 'Bhavani Peth',           count: 168, pricePerHour: 30,  lat: 17.6800, lng: 75.9200 },
+  { zoneId: 'ZONE-1',    zone: 'Zone 1',                  count: 168, pricePerHour: 20,  lat: 17.6750, lng: 75.9200 },
+  { zoneId: 'ZONE-2',    zone: 'Zone 2',                  count: 168, pricePerHour: 20,  lat: 17.6760, lng: 75.9210 },
+  { zoneId: 'ZONE-3',    zone: 'Zone 3',                  count: 168, pricePerHour: 25,  lat: 17.6770, lng: 75.9220 }
 ];
 
 export async function initializeTrafficSimulation(io) {

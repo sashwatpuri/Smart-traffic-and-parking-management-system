@@ -83,7 +83,16 @@ export default function ParkingBooking({ user }) {
     { name: 'Solapur Railway Station', price: 40 },
     { name: 'Bhuikot Fort Area', price: 30 },
     { name: 'Hotgi Road (Soham Mall)', price: 120 },
-    { name: 'ST Stand (Central)', price: 60 }
+    { name: 'ST Stand (Central)', price: 60 },
+    { name: 'Murarji Peth', price: 45 },
+    { name: 'Budhwar Peth', price: 40 },
+    { name: 'Saat Rasta Junction', price: 70 },
+    { name: 'Civil Court Area', price: 55 },
+    { name: 'Samrat Chowk', price: 50 },
+    { name: 'Market Yard', price: 35 },
+    { name: 'Vijaypur Road', price: 40 },
+    { name: 'Jule Solapur', price: 65 },
+    { name: 'Bhavani Peth', price: 30 }
   ];
 
   solapurHubs.forEach(hub => {
