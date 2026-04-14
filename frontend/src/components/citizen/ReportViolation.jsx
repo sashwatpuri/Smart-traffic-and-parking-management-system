@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { Camera, MapPin, FileText, AlertTriangle, Car, Image as ImageIcon, Store, CheckCircle, UploadCloud } from 'lucide-react';
+import { Camera, MapPin, FileText, AlertTriangle, Car, Image as ImageIcon, Store, CheckCircle, UploadCloud, Navigation } from 'lucide-react';
 
 export default function ReportViolation() {
   const API_BASE = import.meta.env.VITE_BACKEND_URL || '';
@@ -8,12 +8,54 @@ export default function ReportViolation() {
   const [vehicleNumber, setVehicleNumber] = useState('');
   const [vehicleType, setVehicleType] = useState('Car');
   const [location, setLocation] = useState('');
+  const [coordinates, setCoordinates] = useState({ lat: null, lng: null });
   const [description, setDescription] = useState('');
   const [photo, setPhoto] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [loading, setLoading] = useState(false);
+  const [locating, setLocating] = useState(false);
   
   const fileInputRef = useRef(null);
+
+  // Auto-locate on mount
+  useEffect(() => {
+    handleAutoLocate();
+  }, []);
+
+  const handleAutoLocate = () => {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser');
+      return;
+    }
+
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        setCoordinates({ lat: latitude, lng: longitude });
+        
+        try {
+          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+          const data = await response.json();
+          if (data && data.display_name) {
+            setLocation(data.display_name);
+          } else {
+            setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+          }
+        } catch (err) {
+          setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+        } finally {
+          setLocating(false);
+          toast.success('Location detected!');
+        }
+      },
+      (error) => {
+        setLocating(false);
+        toast.error('Unable to retrieve location. Please enter manually.');
+      },
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+    );
+  };
 
   const handlePhotoUpload = (e) => {
     const file = e.target.files[0];
@@ -48,6 +90,7 @@ export default function ReportViolation() {
         
       const payload = {
          location,
+         coordinates,
          vehicleNumber,
          vehicleType,
          description
@@ -185,7 +228,17 @@ export default function ReportViolation() {
               )}
 
               <div>
-                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Location / Area *</label>
+                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 flex items-center justify-between">
+                   <span>Location / Area *</span>
+                   <button 
+                    type="button"
+                    onClick={handleAutoLocate}
+                    className="text-[10px] text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-all"
+                   >
+                     {locating ? 'Locating...' : 'Use My Location'}
+                     <Navigation className={`w-3 h-3 ${locating ? 'animate-pulse' : ''}`} />
+                   </button>
+                 </label>
                  <div className="relative">
                    <input 
                      type="text" 
@@ -196,6 +249,9 @@ export default function ReportViolation() {
                    />
                    <MapPin className="w-5 h-5 text-gray-400 absolute left-3 top-3.5" />
                  </div>
+                 {coordinates.lat && (
+                    <p className="text-[9px] text-gray-400 mt-1 font-bold">GPS: {coordinates.lat.toFixed(5)}, {coordinates.lng.toFixed(5)}</p>
+                 )}
               </div>
 
               <div>

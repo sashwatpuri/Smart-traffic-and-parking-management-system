@@ -243,6 +243,7 @@ router.post('/citizen-report', authMiddleware, async (req, res) => {
       confidence: 100,
       alertSent: false,
       finePaid: false,
+      coordinates: req.body.coordinates || null,
       notes: req.body.description || ''
     };
     const created = await IllegalParking.create(row);

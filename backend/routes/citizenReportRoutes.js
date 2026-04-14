@@ -7,6 +7,7 @@ import express from 'express';
 import { authMiddleware } from '../middleware/auth.js';
 import * as reportService from '../services/citizenReportVerificationService.js';
 import CitizenEncroachmentReport from '../models/CitizenEncroachmentReport.js';
+import { io } from '../server.js';
 
 const router = express.Router();
 
@@ -44,6 +45,15 @@ router.post('/encroachment', authMiddleware, async (req, res) => {
     });
 
     await newReport.save();
+
+    // Notify Admin Dashboard in real-time
+    io.emit('new_citizen_report', {
+      reportId: newReport._id,
+      reportType: newReport.reportType,
+      location: newReport.location,
+      time: newReport.createdAt,
+      message: `📢 New ${newReport.reportType} reported at ${newReport.location}`
+    });
 
     // Start ML verification process asynchronously
     reportService.processAndVerifyReport(newReport._id).catch(err => {

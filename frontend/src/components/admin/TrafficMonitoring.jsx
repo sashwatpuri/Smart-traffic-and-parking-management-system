@@ -155,19 +155,31 @@ export default function TrafficMonitoring() {
             {/* The Video Element */}
             <video 
                key={activeZone?.videoUrl + "-" + (activeZone?.id || 0)}
-               src={activeZone?.videoUrl} 
                autoPlay 
                loop 
                muted 
                playsInline
+               preload="auto"
                className="object-cover w-full h-full absolute inset-0 z-0"
                onError={(e) => {
-                 console.error('Video load failed:', e.target.src);
-                 const fallback = e.target.parentElement.querySelector('.video-fallback');
-                 if (fallback) fallback.style.display = 'flex';
-                 e.target.style.display = 'none';
+                 console.error('Video load failed. Attempting fallback...');
+                 // If local video fails, try the persistent Traffic Feed CDN
+                 const trafficFallback = "https://player.vimeo.com/external/371433846.sd.mp4?s=231d600609b5a046c81048f075306666ba3a6288&profile_id=139&oauth2_token_id=57447761";
+                 if (e.target.src !== trafficFallback) {
+                   e.target.src = trafficFallback;
+                   e.target.load();
+                   e.target.play();
+                 } else {
+                   const fallback = e.target.parentElement.querySelector('.video-fallback');
+                   if (fallback) fallback.style.display = 'flex';
+                   e.target.style.display = 'none';
+                 }
                }}
-            />
+            >
+               <source src={activeZone?.videoUrl} type="video/mp4" />
+               <source src={`${window.location.origin}${activeZone?.videoUrl}`} type="video/mp4" />
+               <source src="https://player.vimeo.com/external/371433846.sd.mp4?s=231d600609b5a046c81048f075306666ba3a6288&profile_id=139&oauth2_token_id=57447761" type="video/mp4" />
+            </video>
             {/* Dark gradient overlay to make text readable */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40 z-0"></div>
             

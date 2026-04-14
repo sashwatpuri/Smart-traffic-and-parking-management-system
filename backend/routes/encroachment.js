@@ -6,21 +6,41 @@ import { io } from '../server.js';
 const router = express.Router();
 
 const CAMERA_LOCATIONS = [
-  { cameraId: 'CAM001', location: 'MG Road', zone: 'footpath' },
-  { cameraId: 'CAM002', location: 'Brigade Road', zone: 'road-lane' },
-  { cameraId: 'CAM003', location: 'Commercial Street', zone: 'no-parking' },
-  { cameraId: 'CAM004', location: 'Indiranagar', zone: 'restricted-area' },
-  { cameraId: 'CAM005', location: 'Koramangala', zone: 'footpath' }
+  { cameraId: 'CAM-MKT-001', location: 'MG Road Market', zone: 'footpath' },
+  { cameraId: 'CAM-MKT-002', location: 'City Corner Market', zone: 'road-lane' },
+  { cameraId: 'CAM-STA-001', location: 'Station Road East', zone: 'footpath' },
+  { cameraId: 'CAM-STA-002', location: 'Station Road West', zone: 'no-parking' },
+  { cameraId: 'CAM-MALL-001', location: 'Oasis Mall Main Gate', zone: 'road-lane' },
+  { cameraId: 'CAM-HSP-001', location: 'City Hospital Entrance', zone: 'restricted-area' },
+  { cameraId: 'CAM-JNC-001', location: 'Clock Tower Junction', zone: 'footpath' },
+  { cameraId: 'CAM-JNC-002', location: 'Gandhi Nagar Junction', zone: 'road-lane' }
 ];
 
 const OBJECT_TYPES = ['vendor', 'cart', 'vehicle', 'obstacle', 'hawker'];
 
 const IMAGE_MAP = {
-  vendor: ['/images/encroachment/hawker1.jpg', '/images/encroachment/hawker2.jpg'],
-  hawker: ['/images/encroachment/hawker1.jpg', '/images/encroachment/hawker2.jpg'],
-  cart: ['/images/encroachment/hawker1.jpg'],
-  vehicle: ['/images/encroachment/hawker2.jpg'],
-  obstacle: ['/images/encroachment/hawker1.jpg']
+  vendor: [
+    '/images/encroachment/hawker1.jpg', 
+    '/images/encroachment/hawker2.jpg',
+    'https://images.unsplash.com/photo-1545638423-382a99478f65?q=80&w=800&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1567425172283-4a6c81804cff?q=80&w=800&auto=format&fit=crop'
+  ],
+  hawker: [
+    '/images/encroachment/hawker1.jpg', 
+    '/images/encroachment/hawker2.jpg',
+    'https://images.unsplash.com/photo-1590760451551-40391ee0a76f?q=80&w=800&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1589139268383-7d8856891eb8?q=80&w=800&auto=format&fit=crop'
+  ],
+  cart: [
+    '/images/encroachment/hawker1.jpg',
+    'https://images.unsplash.com/photo-1579294576182-5e60971b5634?q=80&w=800&auto=format&fit=crop'
+  ],
+  vehicle: [
+    'https://images.unsplash.com/photo-1563450917631-c4238e831631?q=80&w=800&auto=format&fit=crop'
+  ],
+  obstacle: [
+    'https://images.unsplash.com/photo-1599815049533-c28340d257a3?q=80&w=800&auto=format&fit=crop'
+  ]
 };
 
 const SEVERITY_BY_ZONE = {
@@ -106,12 +126,10 @@ function withPublicId(doc) {
 }
 
 async function ensureSeedData() {
-  const total = await Encroachment.countDocuments();
-  if (total > 0) {
-    return;
-  }
-
-  const seedRows = Array.from({ length: 6 }, () => buildSeedEncroachment());
+  // Always clear and re-seed to ensure images are correct and entries are fresh
+  await Encroachment.deleteMany({});
+  
+  const seedRows = Array.from({ length: 12 }, () => buildSeedEncroachment());
   await Encroachment.insertMany(seedRows);
 }
 
@@ -233,6 +251,7 @@ router.post('/citizen-report', authMiddleware, async (req, res) => {
       warningIssuedAt: null,
       alertSentAt: null,
       severity: 'high',
+      coordinates: req.body.coordinates || null,
       notes: `Citizen Report: ${req.body.description || ''}`
     };
     const created = await Encroachment.create(row);

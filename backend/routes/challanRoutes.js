@@ -6,6 +6,8 @@
 import express from 'express';
 import { authMiddleware } from '../middleware/auth.js';
 import Challan from '../models/Challan.js';
+import { adminCitizenSyncService } from '../services/adminCitizenSyncService.js';
+import { io } from '../server.js';
 
 const router = express.Router();
 
@@ -170,6 +172,14 @@ router.post('/:challanId/challenge', authMiddleware, async (req, res) => {
     challan.status = 'challenged';
     await challan.save();
 
+    // Sync with Admin Portal
+    io.emit('new_challan_challenge', {
+      challanId: challan._id,
+      challanNumber: challan.challanNumber,
+      vehicleNumber: challan.vehicleNumber,
+      message: `⚖️ New challenge submitted for challan ${challan.challanNumber}`
+    });
+
     res.json({
       success: true,
       data: {
@@ -238,6 +248,13 @@ router.post('/:challanId/pay', authMiddleware, async (req, res) => {
     challan.paymentStatus = 'paid';
     challan.status = 'resolved';
     await challan.save();
+
+    // Sync with Admin Portal (Revenue and Status)
+    await adminCitizenSyncService.syncPaymentStatus(
+      challan.challanNumber,
+      'paid',
+      transactionId || `PAY_${Date.now()}`
+    );
 
     res.json({
       success: true,

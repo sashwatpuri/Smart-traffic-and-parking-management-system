@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { TrendingUp, Activity, AlertCircle } from 'lucide-react';
+import { io } from 'socket.io-client';
 
 export default function Analytics() {
   const [signals, setSignals] = useState([]);
@@ -9,6 +10,21 @@ export default function Analytics() {
 
   useEffect(() => {
     fetchData();
+
+    // Socket.io for real-time sync with Citizen portal
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
+    const socket = io(backendUrl);
+
+    socket.on('admin_challan_generated', fetchData);
+    socket.on('admin_payment_received', fetchData);
+    socket.on('parking_availability_updated', fetchData);
+
+    return () => {
+      socket.off('admin_challan_generated');
+      socket.off('admin_payment_received');
+      socket.off('parking_availability_updated');
+      socket.disconnect();
+    };
   }, []);
 
   const fetchData = async () => {

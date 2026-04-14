@@ -5,6 +5,7 @@ import { io } from '../server.js';
 import { authMiddleware, requirePermission } from '../middleware/auth.js';
 import { env } from '../config/env.js';
 import { logAudit } from '../services/auditLogger.js';
+import { adminCitizenSyncService } from '../services/adminCitizenSyncService.js';
 
 const router = express.Router();
 
@@ -67,6 +68,21 @@ router.post('/issue', authMiddleware, requirePermission('fine:issue'), async (re
         vehicleNumber: normalizedNumber,
         fineId: fine.fineId
     });
+
+    // Detailed sync via service
+    try {
+      await adminCitizenSyncService.syncChallan({
+        challanNumber: fine.fineId,
+        vehicleNumber: normalizedNumber || vehicleNumber,
+        violation: violationType,
+        fineAmount: amount,
+        status: 'pending',
+        createdAt: fine.issuedAt,
+        userId: owner?._id?.toString()
+      });
+    } catch (syncError) {
+      console.error('Fine sync error:', syncError);
+    }
 
     await logAudit({
       req,

@@ -10,6 +10,7 @@ import {
   verifyRazorpayCheckoutSignature,
   verifyRazorpayWebhookSignature
 } from '../services/paymentService.js';
+import { adminCitizenSyncService } from '../services/adminCitizenSyncService.js';
 
 const router = express.Router();
 
@@ -63,6 +64,29 @@ async function markTransactionSuccess(transaction, paymentDetails = {}) {
         }
       }
     );
+  }
+
+  // Trigger real-time sync between Admin and Citizen portals
+  try {
+    const referenceId = transaction.referenceId;
+    if (transaction.transactionType === 'fine') {
+      const fine = await Fine.findById(referenceId);
+      if (fine) {
+        await adminCitizenSyncService.syncPaymentStatus(
+          fine.fineId, 
+          'paid', 
+          transaction._id.toString()
+        );
+      }
+    } else if (transaction.transactionType === 'parking') {
+      await adminCitizenSyncService.syncPaymentStatus(
+        transaction.referenceId, // spotId
+        'paid',
+        transaction._id.toString()
+      );
+    }
+  } catch (syncError) {
+    console.error('Payment sync failed:', syncError);
   }
 
   return transaction;
