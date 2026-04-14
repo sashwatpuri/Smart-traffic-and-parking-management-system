@@ -80,34 +80,39 @@ export default function ParkingManagement() {
       transports: ['websocket', 'polling']
     });
     
-    socket.on('illegal-parking-detected', () => {
-      fetchViolations();
-      fetchStats();
-    });
+    socket.on('parking-updated', fetchData);
+    socket.on('parking_availability_updated', fetchData);
+    socket.on('admin_parking_booking_update', fetchData);
 
-    socket.on('illegal-parking-fine-issued', () => {
-      fetchViolations();
-      fetchStats();
-    });
-
-    const interval = setInterval(() => {
-      fetchSpots();
-      fetchViolations();
-      fetchStats();
-    }, 15000);
+    const interval = setInterval(fetchData, 15000);
 
     return () => {
       clearInterval(interval);
+      socket.off('illegal-parking-detected');
+      socket.off('illegal-parking-fine-issued');
+      socket.off('parking-updated');
+      socket.off('parking_availability_updated');
+      socket.off('admin_parking_booking_update');
       socket.disconnect();
     };
   }, []);
+
+  const fetchData = () => {
+    fetchSpots();
+    fetchViolations();
+    fetchStats();
+  };
 
   const fetchSpots = async () => {
     try {
       const { data } = await axios.get('/api/parking/spots');
       setSpots(data);
       setActiveZoneName(prev => {
-        if (!prev && data.length > 0) return data[0].zone;
+        if (prev) return prev;
+        if (data.length > 0) {
+          const siddheshwar = data.find(s => s.zone === 'Siddheshwar Temple');
+          return siddheshwar ? siddheshwar.zone : data[0].zone;
+        }
         return prev;
       });
     } catch (err) {
@@ -167,10 +172,11 @@ export default function ParkingManagement() {
     if (!activeZone) return [];
     const sorted = [...activeZone.spots].sort((a, b) => a.spotId.localeCompare(b.spotId));
     const result = [];
-    for (let i = 0; i < sorted.length; i += 10) {
-      const lIdx = Math.floor(i / 10);
+    const CHUNK_SIZE = 14; 
+    for (let i = 0; i < sorted.length; i += CHUNK_SIZE) {
+      const lIdx = Math.floor(i / CHUNK_SIZE);
       const letter = LANE_LABELS[lIdx] || String.fromCharCode(65 + lIdx);
-      const chunk = sorted.slice(i, i + 10).map((s, j) => ({
+      const chunk = sorted.slice(i, i + CHUNK_SIZE).map((s, j) => ({
         ...s,
         displayId: `${letter}${String(j + 1).padStart(2, '0')}`
       }));

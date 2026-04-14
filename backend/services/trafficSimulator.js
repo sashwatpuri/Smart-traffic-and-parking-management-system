@@ -12,21 +12,28 @@ const INTERSECTIONS = [
 ];
 
 const PARKING_ZONES = [
-  { zoneId: 'ZONE-1', zone: 'Zone 1',  count: 30, pricePerHour: 30, lat: 18.5204, lng: 73.8567 },
-  { zoneId: 'ZONE-2', zone: 'Zone 2',  count: 25, pricePerHour: 20, lat: 18.5308, lng: 73.8474 },
-  { zoneId: 'ZONE-3', zone: 'Zone 3',  count: 40, pricePerHour: 20, lat: 18.5074, lng: 73.9264 },
-  { zoneId: 'ZONE-4', zone: 'Zone 4',  count: 35, pricePerHour: 25, lat: 18.5074, lng: 73.8088 },
-  { zoneId: 'ZONE-5', zone: 'Zone 5',  count: 50, pricePerHour: 15, lat: 18.5285, lng: 73.8740 },
-  { zoneId: 'ZONE-6', zone: 'Zone 6',  count: 60, pricePerHour: 50, lat: 18.5822, lng: 73.9197 },
-  { zoneId: 'ZONE-7', zone: 'Zone 7',  count: 20, pricePerHour: 10, lat: 18.5195, lng: 73.8553 },
-  { zoneId: 'ZONE-8', zone: 'Zone 8',  count: 25, pricePerHour: 10, lat: 18.5590, lng: 73.8261 }
+  { zoneId: 'HUB-SIDD', zone: 'Siddheshwar Temple',      count: 168, pricePerHour: 80,  lat: 17.6744, lng: 75.9064 },
+  { zoneId: 'HUB-BALI', zone: 'Balives (Old Mill)',      count: 168, pricePerHour: 50,  lat: 17.6780, lng: 75.9100 },
+  { zoneId: 'HUB-NAVI', zone: 'Navi Peth Market',        count: 168, pricePerHour: 100, lat: 17.6800, lng: 75.9050 },
+  { zoneId: 'HUB-RAIL', zone: 'Solapur Railway Station', count: 168, pricePerHour: 40,  lat: 17.6690, lng: 75.9220 },
+  { zoneId: 'HUB-BHUI', zone: 'Bhuikot Fort Area',       count: 168, pricePerHour: 30,  lat: 17.6710, lng: 75.9130 },
+  { zoneId: 'HUB-HOTG', zone: 'Hotgi Road (Soham Mall)', count: 168, pricePerHour: 120, lat: 17.6600, lng: 75.9300 },
+  { zoneId: 'HUB-STAN', zone: 'ST Stand (Central)',      count: 168, pricePerHour: 60,  lat: 17.6700, lng: 75.9000 },
+  { zoneId: 'ZONE-1',   zone: 'Zone 1',                  count: 120, pricePerHour: 20,  lat: 17.6750, lng: 75.9200 },
+  { zoneId: 'ZONE-2',   zone: 'Zone 2',                  count: 120, pricePerHour: 20,  lat: 17.6760, lng: 75.9210 },
+  { zoneId: 'ZONE-3',   zone: 'Zone 3',                  count: 120, pricePerHour: 25,  lat: 17.6770, lng: 75.9220 },
+  { zoneId: 'ZONE-4',   zone: 'Zone 4',                  count: 120, pricePerHour: 30,  lat: 17.6780, lng: 75.9230 },
+  { zoneId: 'ZONE-5',   zone: 'Zone 5',                  count: 120, pricePerHour: 35,  lat: 17.6790, lng: 75.9240 },
+  { zoneId: 'ZONE-6',   zone: 'Zone 6',                  count: 120, pricePerHour: 15,  lat: 17.6800, lng: 75.9250 },
+  { zoneId: 'ZONE-7',   zone: 'Zone 7',                  count: 120, pricePerHour: 10,  lat: 17.6810, lng: 75.9260 },
+  { zoneId: 'ZONE-8',   zone: 'Zone 8',                  count: 120, pricePerHour: 10,  lat: 17.6820, lng: 75.9270 }
 ];
 
 export async function initializeTrafficSimulation(io) {
-  // ── Cleanup old letter-based zones/spots so they're recreated with number names ──
-  await ParkingZone.deleteMany({ zoneId: /^ZONE-/ });
-  await ParkingSpot.deleteMany({ zoneId: /^ZONE-/ });
-  console.log('🧹 Cleaned up ALL current parking data for fresh re-seed');
+  // ── Cleanup ALL parking data for deep synchronization ──
+  await ParkingZone.deleteMany({});
+  await ParkingSpot.deleteMany({});
+  console.log('🧹 Deep cleaned ALL parking data for global sync re-seed');
 
   // ── Initialize traffic signals ──────────────────────────────────────────────
   for (const intersection of INTERSECTIONS) {
