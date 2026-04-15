@@ -11,6 +11,24 @@ import { io } from '../server.js';
 
 const router = express.Router();
 
+function getPresetTimings(preset) {
+  switch ((preset || '').toLowerCase()) {
+    case 'moderate_heat':
+      return { green: 30, yellow: 5, red: 25 };
+    case 'high_heat':
+    case 'heat':
+      return { green: 25, yellow: 5, red: 30 };
+    case 'extreme_heat':
+      return { green: 20, yellow: 5, red: 35 };
+    case 'rain':
+      return { green: 35, yellow: 7, red: 35 };
+    case 'event':
+      return { green: 20, yellow: 5, red: 60 };
+    default:
+      return { green: 30, yellow: 5, red: 30 };
+  }
+}
+
 /**
  * GET /api/traffic-signals
  * Get all traffic signals with current status
@@ -121,6 +139,173 @@ router.patch('/:signalId/status', authMiddleware, async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating signal:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /api/traffic-signals/:signalId/apply-timing-preset
+ * Apply a weather or event timing preset to a signal
+ */
+router.post('/:signalId/apply-timing-preset', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Admin access required' });
+    }
+
+    const { preset, timings } = req.body;
+
+    const signal = await TrafficSignal.findById(req.params.signalId);
+    if (!signal) {
+      return res.status(404).json({ message: 'Signal not found' });
+    }
+
+    const appliedTimings = timings || getPresetTimings(preset);
+    signal.timings = {
+      green: appliedTimings.green,
+      yellow: appliedTimings.yellow,
+      red: appliedTimings.red
+    };
+    signal.currentTimer = signal.status === 'green'
+      ? appliedTimings.green
+      : signal.status === 'yellow'
+        ? appliedTimings.yellow
+        : appliedTimings.red;
+    signal.mode = 'auto';
+    signal.weatherMetrics = {
+      ...(signal.weatherMetrics || {}),
+      timingAdjustment: {
+        reason: preset || 'custom_preset',
+        greenAdjustment: appliedTimings.green - 30,
+        yellowAdjustment: appliedTimings.yellow - 5,
+        redAdjustment: appliedTimings.red - 30
+      },
+      lastWeatherUpdate: new Date()
+    };
+    signal.lastUpdated = new Date();
+    await signal.save();
+
+    io.emit('signal_timing_adjusted', {
+      signalId: signal._id,
+      location: signal.location,
+      status: signal.currentSignal,
+      timings: signal.timings,
+      preset: preset || 'custom',
+      timestamp: new Date()
+    });
+
+    res.json({
+      message: 'Timing preset applied',
+      signal
+    });
+  } catch (error) {
+    console.error('Error applying timing preset:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /api/traffic-signals/:signalId/event-override
+ * Activate a manual event override for rallies, processions, or large events
+ */
+router.post('/:signalId/event-override', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Admin access required' });
+    }
+
+    const { eventName, redDuration = 60, yellowDuration = 5, greenDuration = 20, durationMinutes = 30, reason } = req.body;
+
+    const signal = await TrafficSignal.findById(req.params.signalId);
+    if (!signal) {
+      return res.status(404).json({ message: 'Signal not found' });
+    }
+
+    signal.mode = 'manual';
+    signal.status = 'red';
+    signal.currentTimer = redDuration;
+    signal.timings = {
+      green: greenDuration,
+      yellow: yellowDuration,
+      red: redDuration
+    };
+    signal.eventOverride = {
+      active: true,
+      name: eventName || 'Event Override',
+      reason: reason || 'Large event / rally control',
+      redDuration,
+      yellowDuration,
+      greenDuration,
+      startedAt: new Date(),
+      endsAt: new Date(Date.now() + Number(durationMinutes) * 60 * 1000)
+    };
+    signal.lastUpdated = new Date();
+    await signal.save();
+
+    io.emit('signal_status_change', {
+      signalId: signal._id,
+      location: signal.location,
+      status: signal.status,
+      duration: signal.currentTimer,
+      mode: signal.mode,
+      eventOverride: signal.eventOverride,
+      timestamp: new Date()
+    });
+
+    res.json({
+      message: 'Event override activated',
+      signal
+    });
+  } catch (error) {
+    console.error('Error activating event override:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /api/traffic-signals/:signalId/event-override
+ * Clear an active manual event override
+ */
+router.delete('/:signalId/event-override', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Admin access required' });
+    }
+
+    const signal = await TrafficSignal.findById(req.params.signalId);
+    if (!signal) {
+      return res.status(404).json({ message: 'Signal not found' });
+    }
+
+    signal.mode = 'auto';
+    signal.eventOverride = {
+      active: false,
+      name: null,
+      reason: null,
+      redDuration: null,
+      yellowDuration: null,
+      greenDuration: null,
+      startedAt: null,
+      endsAt: null
+    };
+    signal.lastUpdated = new Date();
+    await signal.save();
+
+    io.emit('signal_status_change', {
+      signalId: signal._id,
+      location: signal.location,
+      status: signal.status,
+      duration: signal.currentTimer,
+      mode: signal.mode,
+      timestamp: new Date()
+    });
+
+    res.json({
+      message: 'Event override cleared',
+      signal
+    });
+  } catch (error) {
+    console.error('Error clearing event override:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });

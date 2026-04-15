@@ -84,6 +84,19 @@ const trafficSignalSchema = new mongoose.Schema(
         redAdjustment: { type: Number, default: 0 }
       }
     },
+    eventOverride: {
+      active: {
+        type: Boolean,
+        default: false
+      },
+      name: String,
+      reason: String,
+      redDuration: Number,
+      yellowDuration: Number,
+      greenDuration: Number,
+      startedAt: Date,
+      endsAt: Date
+    },
     // Zone synchronization
     syncedZone: {
       type: String,

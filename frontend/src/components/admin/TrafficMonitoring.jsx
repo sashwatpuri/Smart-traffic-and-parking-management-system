@@ -1,9 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, Bot, Camera } from 'lucide-react';
+import axios from 'axios';
+import toast from 'react-hot-toast';
+import { AlertTriangle, Bot, Camera, ThermometerSun, CalendarRange, RefreshCcw } from 'lucide-react';
+
+const presetTimings = {
+  normal: { label: 'Normal', green: 30, yellow: 5, red: 30 },
+  high_heat: { label: 'High Heat', green: 25, yellow: 5, red: 30 },
+  extreme_heat: { label: 'Extreme Heat', green: 20, yellow: 5, red: 35 },
+  event: { label: 'Large Event / Rally', green: 20, yellow: 5, red: 60 }
+};
 
 export default function TrafficMonitoring() {
   // Global control mode state
   const [controlMode, setControlMode] = useState('Automatic'); // 'Automatic' | 'Manual'
+  const [signalPreset, setSignalPreset] = useState('high_heat');
 
   // Alerts State
   const [alerts, setAlerts] = useState([
@@ -13,14 +23,14 @@ export default function TrafficMonitoring() {
 
   // States of each zone
   const [zones, setZones] = useState([
-    { id: 1, name: 'Oasis Mall Area', latitude: 17.676673, longitude: 75.8986813, vehicles: 342, congestion: 'LOW', signal: 'Green', timer: 45, cam: 'CAM-STN-001', videoUrl: '/videos/traffic_flow.mp4' },
-    { id: 2, name: 'Park Shopping Complex - City Corner', latitude: 17.6796, longitude: 75.9088, vehicles: 890, congestion: 'MEDIUM', signal: 'Red', timer: 15, cam: 'CAM-MKT-002', videoUrl: '/videos/traffic_count.mp4' },
-    { id: 3, name: 'Virat Mall - Hotgi Road', latitude: 17.6710335, longitude: 75.9418596, vehicles: 756, congestion: 'MEDIUM', signal: 'Red', timer: 60, cam: 'CAM-VJP-003', videoUrl: '/videos/video_2.mp4' },
-    { id: 4, name: 'City Pride - GMR Mall Area', latitude: 17.6743, longitude: 75.9138, vehicles: 1204, congestion: 'HIGH', signal: 'Green', timer: 30, cam: 'CAM-HWY-004', videoUrl: '/videos/video_3.mp4' },
-    { id: 5, name: 'Soham Mall - Hospital Stretch', latitude: 17.6644158, longitude: 75.9126046, vehicles: 210, congestion: 'LOW', signal: 'Red', timer: 25, cam: 'CAM-CVL-005', videoUrl: '/videos/video_4.mp4' },
-    { id: 6, name: 'Bhuikot Fort - Siddheshwar Area', latitude: 17.6744887, longitude: 75.9021219, vehicles: 950, congestion: 'HIGH', signal: 'Yellow', timer: 5, cam: 'CAM-SQR-006', videoUrl: '/videos/video_3.mp4' },
-    { id: 7, name: 'Solapur Cancer Center Junction', latitude: 17.656601, longitude: 75.896723, vehicles: 640, congestion: 'MEDIUM', signal: 'Green', timer: 50, cam: 'CAM-ITP-007', videoUrl: '/videos/video_2.mp4' },
-    { id: 8, name: 'Bharat Mata Nagar - Gangji Mill', latitude: 17.6284768, longitude: 75.9298602, vehicles: 112, congestion: 'LOW', signal: 'Green', timer: 10, cam: 'CAM-BPS-008', videoUrl: '/videos/video_4.mp4' }
+    { id: 1, signalId: 'SIG001', name: 'Oasis Mall Area', latitude: 17.676673, longitude: 75.8986813, vehicles: 342, congestion: 'LOW', signal: 'Green', timer: 45, cam: 'CAM-STN-001', videoUrl: '/videos/traffic_flow.mp4' },
+    { id: 2, signalId: 'SIG002', name: 'Park Shopping Complex - City Corner', latitude: 17.6796, longitude: 75.9088, vehicles: 890, congestion: 'MEDIUM', signal: 'Red', timer: 15, cam: 'CAM-MKT-002', videoUrl: '/videos/traffic_count.mp4' },
+    { id: 3, signalId: 'SIG003', name: 'Virat Mall - Hotgi Road', latitude: 17.6710335, longitude: 75.9418596, vehicles: 756, congestion: 'MEDIUM', signal: 'Red', timer: 60, cam: 'CAM-VJP-003', videoUrl: '/videos/video_2.mp4' },
+    { id: 4, signalId: 'SIG004', name: 'City Pride - GMR Mall Area', latitude: 17.6743, longitude: 75.9138, vehicles: 1204, congestion: 'HIGH', signal: 'Green', timer: 30, cam: 'CAM-HWY-004', videoUrl: '/videos/video_3.mp4' },
+    { id: 5, signalId: 'SIG005', name: 'Soham Mall - Hospital Stretch', latitude: 17.6644158, longitude: 75.9126046, vehicles: 210, congestion: 'LOW', signal: 'Red', timer: 25, cam: 'CAM-CVL-005', videoUrl: '/videos/video_4.mp4' },
+    { id: 6, signalId: 'SIG006', name: 'Bhuikot Fort - Siddheshwar Area', latitude: 17.6744887, longitude: 75.9021219, vehicles: 950, congestion: 'HIGH', signal: 'Yellow', timer: 5, cam: 'CAM-SQR-006', videoUrl: '/videos/video_3.mp4' },
+    { id: 7, signalId: null, name: 'Solapur Cancer Center Junction', latitude: 17.656601, longitude: 75.896723, vehicles: 640, congestion: 'MEDIUM', signal: 'Green', timer: 50, cam: 'CAM-ITP-007', videoUrl: '/videos/video_2.mp4' },
+    { id: 8, signalId: null, name: 'Bharat Mata Nagar - Gangji Mill', latitude: 17.6284768, longitude: 75.9298602, vehicles: 112, congestion: 'LOW', signal: 'Green', timer: 10, cam: 'CAM-BPS-008', videoUrl: '/videos/video_4.mp4' }
   ]);
 
   // Selected zone to display in the main monitor
@@ -34,11 +44,14 @@ export default function TrafficMonitoring() {
         let newTimer = zone.timer;
         let newSignal = zone.signal;
         
-        // Time logic in Automatic mode
-        if (controlMode === 'Automatic') {
+        // Time logic in Automatic mode or during a timed event override
+        if (controlMode === 'Automatic' || zone.overrideActive) {
           newTimer -= 1;
           if (newTimer <= 0) {
-            if (newSignal === 'Green') { newSignal = 'Yellow'; newTimer = 5; }
+            if (zone.overrideActive) {
+              newTimer = 0;
+              newSignal = 'Red';
+            } else if (newSignal === 'Green') { newSignal = 'Yellow'; newTimer = 5; }
             else if (newSignal === 'Yellow') { newSignal = 'Red'; newTimer = Math.floor(Math.random() * 30) + 30; } // 30-60s
             else if (newSignal === 'Red') { newSignal = 'Green'; newTimer = Math.floor(Math.random() * 30) + 30; }
           }
@@ -69,10 +82,72 @@ export default function TrafficMonitoring() {
     setZones(prevZones => prevZones.map(zone => {
        if (zone.id === selectedZoneId) {
           // When manually changing, set it and reset a dummy timer
-          return { ...zone, signal: color, timer: 0 };
+          return { ...zone, signal: color, timer: 0, overrideActive: false };
        }
        return zone;
     }));
+  };
+
+  const applyZoneTimingPreset = async () => {
+    const selectedTimings = presetTimings[signalPreset] || presetTimings.normal;
+
+    setZones(prevZones => prevZones.map(zone => {
+      if (zone.id !== selectedZoneId) return zone;
+
+      const updatedTimer = zone.signal === 'Green'
+        ? selectedTimings.green
+        : zone.signal === 'Yellow'
+          ? selectedTimings.yellow
+          : selectedTimings.red;
+
+      return {
+        ...zone,
+        timer: updatedTimer,
+        timings: selectedTimings,
+        overrideActive: false
+      };
+    }));
+
+    const targetZone = zones.find(zone => zone.id === selectedZoneId);
+    if (targetZone?.signalId) {
+      try {
+        await axios.post(`/api/traffic-signals/${targetZone.signalId}/apply-timing-preset`, {
+          preset: signalPreset,
+          timings: selectedTimings
+        });
+        toast.success(`Applied ${presetTimings[signalPreset].label} timing preset`);
+      } catch (error) {
+        toast.error(error.response?.data?.message || 'Failed to apply timing preset');
+      }
+    } else {
+      toast.success('Timing preset updated in the dashboard preview');
+    }
+  };
+
+  const clearEventOverride = async () => {
+    const targetZone = zones.find(zone => zone.id === selectedZoneId);
+
+    setZones(prevZones => prevZones.map(zone => {
+      if (zone.id !== selectedZoneId) return zone;
+      return {
+        ...zone,
+        overrideActive: false,
+        overrideName: null
+      };
+    }));
+
+    setControlMode('Automatic');
+
+    if (targetZone?.signalId) {
+      try {
+        await axios.delete(`/api/traffic-signals/${targetZone.signalId}/event-override`);
+        toast.success('Event override cleared');
+      } catch (error) {
+        toast.error(error.response?.data?.message || 'Failed to clear event override');
+      }
+    } else {
+      toast.success('Event override cleared in the dashboard preview');
+    }
   };
 
   const getCongestionColor = (level) => {
@@ -219,7 +294,7 @@ export default function TrafficMonitoring() {
                   <span className="text-[10px] font-black text-white tracking-widest uppercase">Agent Insight</span>
                 </div>
                 <p className="text-[11px] text-blue-50 font-medium leading-tight">
-                  {activeZone?.congestion === 'HIGH' 
+                    {activeZone?.congestion === 'HIGH' 
                     ? "SITA is extending Green phase by 15s to clear heavy backlog." 
                     : "Maintaining optimal balance between pedestrian and vehicle flow."}
                 </p>
@@ -353,8 +428,39 @@ export default function TrafficMonitoring() {
                       {controlMode === 'Manual' && (
                         <p className="text-xs text-slate-500">Click on the traffic light indicators to manually switch the signal.</p>
                       )}
+                        {activeZone?.overrideActive && (
+                          <p className="text-xs font-bold text-red-600">Event override active: {activeZone.overrideName || 'Large event'}</p>
+                        )}
                    </div>
                 </div>
+
+               <div className="mt-6 grid grid-cols-1 gap-4 border-t border-slate-100 pt-6">
+                 <div className="rounded-2xl bg-amber-50 border border-amber-100 p-4">
+                   <div className="flex items-center gap-2 mb-3">
+                     <ThermometerSun className="w-4 h-4 text-amber-600" />
+                    <h4 className="font-black text-amber-700 text-sm uppercase tracking-widest">Timing Control</h4>
+                   </div>
+                   <div className="flex flex-col gap-3">
+                     <select
+                      value={signalPreset}
+                      onChange={(e) => setSignalPreset(e.target.value)}
+                       className="w-full rounded-xl border border-amber-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none"
+                     >
+                       {Object.entries(presetTimings).map(([value, preset]) => (
+                         <option key={value} value={value}>{preset.label}</option>
+                       ))}
+                     </select>
+                     <button
+                       type="button"
+                       onClick={applyZoneTimingPreset}
+                       className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-black uppercase tracking-widest text-white hover:bg-amber-700 transition"
+                     >
+                       <RefreshCcw className="w-4 h-4" />
+                       Apply preset
+                     </button>
+                   </div>
+                 </div>
+               </div>
              </div>
           </div>
         </div>

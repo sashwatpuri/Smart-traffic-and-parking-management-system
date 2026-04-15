@@ -4,6 +4,7 @@
  */
 
 import express from 'express';
+import TrafficSignal from '../models/TrafficSignal.js';
 import { WeatherAdaptiveSignal } from '../services/weatherAdaptiveSignal.js';
 import { adminCitizenSyncService } from '../services/adminCitizenSyncService.js';
 import { authMiddleware } from '../middleware/auth.js';
@@ -37,10 +38,10 @@ router.get('/:signalId', authMiddleware, async (req, res) => {
         );
 
         // Calculate adapted timings based on weather
-        adaptedTimings = weatherService.calculateAdaptiveTimings(
+        ({ adjustedTimings: adaptedTimings } = weatherService.calculateAdaptiveTimings(
           signal.timings,
           weatherData
-        );
+        ));
       } catch (error) {
         console.warn(`Weather data unavailable for ${signalId}:`, error.message);
       }
@@ -107,7 +108,7 @@ router.get('/zone/:zoneId', authMiddleware, async (req, res) => {
       name: signal.name,
       status: signal.status,
       timings: weatherData 
-        ? weatherService.calculateAdaptiveTimings(signal.timings, weatherData)
+        ? weatherService.calculateAdaptiveTimings(signal.timings, weatherData).adjustedTimings
         : signal.timings,
       weatherMetrics: signal.weatherMetrics
     }));

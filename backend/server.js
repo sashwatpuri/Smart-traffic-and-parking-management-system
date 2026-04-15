@@ -17,6 +17,7 @@ import cameraRoutes from './routes/cameras.js';
 import violationsRoutes from './routes/violations.js';
 import streetEncroachmentRoutes from './routes/streetEncroachment.js';
 import trafficSignalsRoutes from './routes/trafficSignals.js';
+import weatherSignalsRoutes from './routes/weatherSignals.js';
 import mlDetectionRoutes from './routes/mlDetection.js';
 import documentRoutes from './routes/documentRoutes.js';
 import citizenReportRoutes from './routes/citizenReportRoutes.js';
@@ -121,6 +122,7 @@ app.use('/api/cameras', cameraRoutes);
 app.use('/api/violations', violationsRoutes);
 app.use('/api/street-encroachment', streetEncroachmentRoutes);
 app.use('/api/traffic-signals', trafficSignalsRoutes);
+app.use('/api/weather-signals', weatherSignalsRoutes);
 app.use('/api/ml-detection', mlDetectionRoutes);
 
 // Citizen document management and reporting
