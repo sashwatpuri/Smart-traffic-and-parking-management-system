@@ -652,7 +652,7 @@ export default function ParkingBooking({ user }) {
 
       {/* Action Bar at bottom */}
       {selectedSpot && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-10px_30px_rgba(0,0,0,0.06)] p-4 md:p-6 flex justify-between items-center z-50 animate-slide-up flex-wrap sm:flex-nowrap gap-4 md:gap-6">
+        <div className="fixed bottom-0 left-0 right-0 lg:left-64 bg-white border-t border-gray-200 shadow-[0_-10px_30px_rgba(0,0,0,0.06)] p-4 md:p-6 flex justify-between items-center z-50 animate-slide-up flex-wrap sm:flex-nowrap gap-4 md:gap-6">
           <div className="flex flex-col w-full sm:w-auto pl-2 sm:pl-8 text-center sm:text-left">
              <span className="text-sm font-bold text-gray-500">
                {duration} Hr{duration > 1 ? 's' : ''} • Slot {selectedSpot.displayNum}
