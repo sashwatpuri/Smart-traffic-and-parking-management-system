@@ -231,11 +231,11 @@ export default function IllegalParkingDetection() {
                 {/* Image Section */}
                 <div className="md:w-1/3 relative bg-gray-100">
                   <img 
-                    src={violation.imageUrl} 
+                    src={'/images/illegal-parking/parking1.jpg'} 
                     alt={`Violation ${violation.licensePlate}`}
                     className="w-full h-64 md:h-full object-cover"
                     onError={(e) => {
-                      e.target.src = 'https://via.placeholder.com/400x300/ef4444/ffffff?text=Illegal+Parking';
+                      e.target.src = '/images/illegal-parking/parking1.jpg';
                     }}
                   />
                   <div className="absolute top-2 left-2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-lg text-xs font-semibold flex items-center space-x-1">
@@ -413,11 +413,11 @@ export default function IllegalParkingDetection() {
               )}
 
               <img 
-                src={selectedViolation.imageUrl} 
+                src={'/images/illegal-parking/parking1.jpg'} 
                 alt="Violation evidence"
                 className="w-full rounded-lg"
                 onError={(e) => {
-                  e.target.src = 'https://via.placeholder.com/800x600/ef4444/ffffff?text=Illegal+Parking+Evidence';
+                  e.target.src = '/images/illegal-parking/parking1.jpg';
                 }}
               />
             </div>

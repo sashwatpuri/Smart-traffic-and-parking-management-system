@@ -16,12 +16,27 @@ export default function EncroachmentMonitoring() {
 
   const fetchEncroachments = async () => {
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No token found in localStorage');
+        setEncroachments([]);
+        setLoading(false);
+        return;
+      }
+
       const response = await fetch(`${API_BASE}/api/encroachments`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
+      
       if (!response.ok) {
+        console.error(`Failed to fetch encroachments: ${response.status}`, response);
+        if (response.status === 401) {
+          console.error('Token is invalid or expired. Please login again.');
+          localStorage.removeItem('token');
+        }
         throw new Error(`Failed to fetch encroachments (${response.status})`);
       }
       const data = await response.json();
@@ -36,13 +51,31 @@ export default function EncroachmentMonitoring() {
 
   const handleResolve = async (id) => {
     try {
-      await fetch(`${API_BASE}/api/encroachments/${id}/resolve`, {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No token found. Please login again.');
+        return;
+      }
+
+      const response = await fetch(`${API_BASE}/api/encroachments/${id}/resolve`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
+
+      if (!response.ok) {
+        console.error(`Failed to resolve encroachment: ${response.status}`, response);
+        if (response.status === 403) {
+          console.error('You do not have permission to resolve encroachments. Admin role required.');
+        } else if (response.status === 401) {
+          console.error('Token is invalid. Please login again.');
+        }
+        return;
+      }
+      
+      console.log('Encroachment resolved successfully');
       fetchEncroachments();
     } catch (error) {
       console.error('Error resolving encroachment:', error);
@@ -51,13 +84,31 @@ export default function EncroachmentMonitoring() {
 
   const handleIgnore = async (id) => {
     try {
-      await fetch(`${API_BASE}/api/encroachments/${id}/ignore`, {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No token found. Please login again.');
+        return;
+      }
+
+      const response = await fetch(`${API_BASE}/api/encroachments/${id}/ignore`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
+
+      if (!response.ok) {
+        console.error(`Failed to ignore encroachment: ${response.status}`, response);
+        if (response.status === 403) {
+          console.error('You do not have permission to ignore encroachments. Admin role required.');
+        } else if (response.status === 401) {
+          console.error('Token is invalid. Please login again.');
+        }
+        return;
+      }
+
+      console.log('Encroachment ignored successfully');
       fetchEncroachments();
     } catch (error) {
       console.error('Error ignoring encroachment:', error);
@@ -200,11 +251,11 @@ export default function EncroachmentMonitoring() {
                 {/* Camera Feed Image */}
                 <div className="md:w-1/3 relative">
                   <img 
-                    src={enc.imageUrl} 
+                    src={'/images/encroachment/hawker1.jpg'} 
                     alt={`${enc.detectedObject} at ${enc.location}`}
                     className="w-full h-64 md:h-full object-cover"
                     onError={(e) => {
-                      e.target.src = 'https://via.placeholder.com/400x300/6366f1/ffffff?text=Camera+Feed';
+                      e.target.src = '/images/encroachment/hawker1.jpg';
                     }}
                   />
                   <div className="absolute top-2 left-2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-lg text-xs font-semibold flex items-center space-x-1">

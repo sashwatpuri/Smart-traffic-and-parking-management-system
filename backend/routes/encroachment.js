@@ -193,7 +193,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
   }
 });
 
-router.put('/:id/resolve', authMiddleware, adminOnly, async (req, res) => {
+router.put('/:id/resolve', authMiddleware, async (req, res) => {
   try {
     const encroachment = await Encroachment.findByIdAndUpdate(
       req.params.id,
@@ -216,7 +216,7 @@ router.put('/:id/resolve', authMiddleware, adminOnly, async (req, res) => {
   }
 });
 
-router.put('/:id/ignore', authMiddleware, adminOnly, async (req, res) => {
+router.put('/:id/ignore', authMiddleware, async (req, res) => {
   try {
     const encroachment = await Encroachment.findByIdAndUpdate(
       req.params.id,

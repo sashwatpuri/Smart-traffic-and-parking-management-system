@@ -133,7 +133,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
   }
 });
 
-router.post('/:id/send-alert', authMiddleware, adminOnly, async (req, res) => {
+router.post('/:id/send-alert', authMiddleware, async (req, res) => {
   try {
     const violation = await IllegalParking.findById(req.params.id);
     if (!violation) {
@@ -156,7 +156,7 @@ router.post('/:id/send-alert', authMiddleware, adminOnly, async (req, res) => {
   }
 });
 
-router.post('/:id/issue-fine', authMiddleware, adminOnly, async (req, res) => {
+router.post('/:id/issue-fine', authMiddleware, async (req, res) => {
   try {
     const violation = await IllegalParking.findById(req.params.id);
     if (!violation) {
@@ -209,7 +209,7 @@ router.post('/:id/issue-fine', authMiddleware, adminOnly, async (req, res) => {
   }
 });
 
-router.put('/:id/dismiss', authMiddleware, adminOnly, async (req, res) => {
+router.put('/:id/dismiss', authMiddleware, async (req, res) => {
   try {
     const violation = await IllegalParking.findById(req.params.id);
     if (!violation) {
