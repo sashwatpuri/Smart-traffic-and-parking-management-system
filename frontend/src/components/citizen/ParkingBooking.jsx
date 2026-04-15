@@ -380,10 +380,10 @@ export default function ParkingBooking({ user }) {
       </div>
 
       {/* Main Layout containing Sidebar and Map */}
-      <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row items-start gap-4 md:gap-8 p-3 md:p-8">
+      <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row items-start gap-4 md:gap-8 p-3 md:p-8 pb-24 md:pb-8 lg:pb-8">
          
          {/* Left Side: Calendar & Time Picker Sidebar */}
-         <div className="w-full lg:w-80 flex-shrink-0 bg-white border border-gray-200 rounded-3xl p-5 md:p-6 shadow-sm lg:sticky lg:top-8 z-10">
+         <div className="w-full lg:w-80 flex-shrink-0 bg-white border border-gray-200 rounded-3xl p-5 md:p-6 shadow-sm lg:sticky lg:top-8 z-10 mb-24 md:mb-0 lg:mb-0">
             <h3 className="font-extrabold text-[#0F172A] mb-4 md:mb-6 flex items-center gap-2">
                <div className="p-2 bg-green-50 rounded-lg">
                   <svg className="w-5 h-5 text-[#10B981]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -466,7 +466,7 @@ export default function ParkingBooking({ user }) {
           {/* Right Side: True Parking Canvas */}
           <div className="flex-1 w-full bg-white border border-gray-200 shadow-sm rounded-2xl flex flex-col items-center overflow-hidden">
              {activeZone ? (
-               <div className="p-4 md:p-8 w-full overflow-x-auto hide-scrollbar select-none pt-10">
+               <div className="p-4 md:p-8 w-full overflow-x-auto hide-scrollbar select-none pt-10 pb-8">
                  
                  <div className="text-center w-full mb-8">
                    <div className="font-bold text-lg tracking-widest text-[#0F172A] bg-gray-50 px-6 py-2 rounded-lg border border-gray-200 inline-block uppercase shadow-sm">
@@ -579,14 +579,14 @@ export default function ParkingBooking({ user }) {
                                    }`}
                                >
                                  {/* Render spot label */}
-                                 <span className={`absolute ${isTopFacingDown ? 'top-2' : 'bottom-2'} text-[10px] sm:text-xs font-black tracking-wider 
+                                 <span className={`absolute ${isTopFacingDown ? 'top-1' : 'bottom-1'} left-1/2 -translate-x-1/2 text-[10px] sm:text-xs font-black tracking-wider whitespace-nowrap
                                     ${isOccupied ? 'text-red-400' : isSelected ? 'text-white' : spot.isEV ? 'text-emerald-400 animate-pulse' : 'text-gray-400'}`}>
                                     {spot.isEV && '⚡'}{spot.displayNum}
                                  </span>
 
                                  {spot.isShadowParking && !isOccupied && (
-                                   <span className="absolute left-1 top-1 text-[8px] font-black uppercase tracking-[0.24em] text-amber-700 bg-amber-200 px-1.5 py-0.5 rounded-sm shadow-sm">
-                                     SHADOW
+                                   <span className="absolute right-0.5 top-0.5 text-[7px] sm:text-[8px] font-black uppercase tracking-[0.2em] text-amber-700 bg-amber-200 px-1 py-0.5 rounded-sm shadow-sm z-20">
+                                     S
                                    </span>
                                  )}
 
@@ -652,7 +652,7 @@ export default function ParkingBooking({ user }) {
 
       {/* Action Bar at bottom */}
       {selectedSpot && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-10px_30px_rgba(0,0,0,0.06)] p-4 flex justify-between items-center z-50 animate-slide-up flex-wrap sm:flex-nowrap gap-4">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-10px_30px_rgba(0,0,0,0.06)] p-4 md:p-6 flex justify-between items-center z-50 animate-slide-up flex-wrap sm:flex-nowrap gap-4 md:gap-6">
           <div className="flex flex-col w-full sm:w-auto pl-2 sm:pl-8 text-center sm:text-left">
              <span className="text-sm font-bold text-gray-500">
                {duration} Hr{duration > 1 ? 's' : ''} • Slot {selectedSpot.displayNum}
