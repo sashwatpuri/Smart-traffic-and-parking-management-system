@@ -42,13 +42,53 @@ export default function MyFines() {
 
   useEffect(() => {
     fetchFines();
+    
+    // Get backend URL - handle both local dev and production
     const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
+    console.log('[Socket.IO] Connecting to backend:', backendUrl);
+    
     const socket = io(backendUrl, {
-      transports: ['websocket', 'polling']
+      transports: ['polling', 'websocket'], // Try polling first for production stability
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 5,
+      path: '/socket.io'
     });
-    socket.on('new-fine', () => fetchFines());
-    socket.on('fine-updated', () => fetchFines());
-    return () => socket.disconnect();
+
+    socket.on('connect', () => {
+      console.log('[Socket.IO] ✅ Connected:', socket.id);
+    });
+
+    socket.on('new-fine', (data) => {
+      console.log('[Socket.IO] 📨 new-fine event received:', data);
+      // Fetch fines immediately - slight delay to ensure DB is updated
+      setTimeout(() => {
+        console.log('[Socket.IO] Refreshing fines list...');
+        fetchFines();
+      }, 500);
+    });
+
+    socket.on('fine-updated', (data) => {
+      console.log('[Socket.IO] 📨 fine-updated event received:', data);
+      setTimeout(() => {
+        console.log('[Socket.IO] Refreshing fines list...');
+        fetchFines();
+      }, 500);
+    });
+
+    socket.on('disconnect', () => {
+      console.warn('[Socket.IO] ⚠️ Disconnected');
+    });
+
+    socket.on('error', (error) => {
+      console.error('[Socket.IO] ❌ Error:', error);
+    });
+
+    return () => {
+      console.log('[Socket.IO] Cleaning up connection');
+      socket.disconnect();
+    };
   }, []);
 
   const initiatePayment = (fine) => {

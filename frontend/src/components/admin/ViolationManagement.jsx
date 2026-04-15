@@ -85,9 +85,11 @@ export default function ViolationManagement() {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      await axios.post('/api/fines/issue', formData, {
+      console.log('[ADMIN] Issuing fine:', formData);
+      const response = await axios.post('/api/fines/issue', formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      console.log('[ADMIN] ✅ Fine issued successfully:', response.data);
       toast.success('Violation recorded and fine issued!');
       setShowForm(false);
       fetchFines();
@@ -98,7 +100,9 @@ export default function ViolationManagement() {
         location: { name: '', lat: 0, lng: 0 }
       });
     } catch (error) {
-      toast.error('Failed to issue fine');
+      console.error('[ADMIN] ❌ Error issuing fine:', error.response?.data || error.message);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to issue fine';
+      toast.error(`Failed to issue fine: ${errorMessage}`);
     }
   };
 

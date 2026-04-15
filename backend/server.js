@@ -33,7 +33,11 @@ import { env } from './config/env.js';
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
-  cors: { origin: env.CORS_ORIGIN }
+  cors: { origin: env.CORS_ORIGIN },
+  transports: ['polling', 'websocket'], // Use polling first for production stability
+  pingInterval: 25000,
+  pingTimeout: 60000,
+  path: '/socket.io'
 });
 
 const corsOptions = {

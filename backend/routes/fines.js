@@ -22,15 +22,19 @@ router.get('/', authMiddleware, async (req, res) => {
       
       // Only filter by vehicleNumber if the user actually has one set
       if (user?.vehicleNumber && user.vehicleNumber.trim() !== "") {
-        orConditions.push({ vehicleNumber: user.vehicleNumber });
+        const normalizedVehicleNumber = user.vehicleNumber.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+        // Search for fines by exact vehicleNumber match (handles userId:null fines)
+        orConditions.push({ vehicleNumber: normalizedVehicleNumber });
       }
       
       filter = { $or: orConditions };
     }
 
     const fines = await Fine.find(filter).populate('userId', 'name email').sort({ issuedAt: -1 });
+    console.log(`[FINES] Citizen ${req.user.userId} fetched ${fines.length} fines`);
     res.json(fines);
   } catch (error) {
+    console.error('[FINES] Error fetching fines:', error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -39,16 +43,33 @@ router.post('/issue', authMiddleware, requirePermission('fine:issue'), async (re
   try {
     let { vehicleNumber, violationType, amount, location, imageUrl } = req.body;
     
+    // Validate required fields
+    if (!vehicleNumber || !violationType || !amount) {
+      return res.status(400).json({ message: 'Missing required fields: vehicleNumber, violationType, amount' });
+    }
+    
     // Normalize vehicle number (uppercase, no spaces/dashes)
     const normalizedNumber = vehicleNumber ? vehicleNumber.replace(/[^A-Z0-9]/gi, '').toUpperCase() : '';
     
+    if (!normalizedNumber) {
+      return res.status(400).json({ message: 'Invalid vehicle number format' });
+    }
+    
+    console.log(`[FINE-ISSUE] Attempting to issue ₹${amount} fine for vehicle ${normalizedNumber}`);
+    
     const owner = await User.findOne({ vehicleNumber: normalizedNumber });
+    
+    if (!owner) {
+      console.warn(`[FINE-ISSUE] Owner not found for vehicle ${normalizedNumber} - fine will be issued with vehicleNumber match`);
+    } else {
+      console.log(`[FINE-ISSUE] Owner found: ${owner._id} (${owner.email})`);
+    }
 
     const fineId = `FINE${Date.now()}`;
     const fine = new Fine({
       fineId,
       userId: owner?._id || null,
-      vehicleNumber: normalizedNumber || vehicleNumber,
+      vehicleNumber: normalizedNumber,
       violationType,
       amount,
       currency: 'INR',
@@ -60,28 +81,34 @@ router.post('/issue', authMiddleware, requirePermission('fine:issue'), async (re
       issuedAt: new Date()
     });
 
-    await fine.save();
+    const savedFine = await fine.save();
+    console.log(`[FINE-ISSUE] ✅ Fine created: ${fineId} for ₹${amount}`);
 
-    // Notify citizen in real-time
+    // Notify citizen in real-time - broadcast to all clients
     io.emit('new-fine', {
-        userId: owner?._id,
+        userId: owner?._id?.toString(),
         vehicleNumber: normalizedNumber,
-        fineId: fine.fineId
+        fineId: fine.fineId,
+        amount: fine.amount,
+        timestamp: new Date()
     });
+    console.log(`[REAL-TIME] Emitted 'new-fine' event for ${normalizedNumber}`);
 
     // Detailed sync via service
     try {
       await adminCitizenSyncService.syncChallan({
         challanNumber: fine.fineId,
-        vehicleNumber: normalizedNumber || vehicleNumber,
+        vehicleNumber: normalizedNumber,
         violation: violationType,
         fineAmount: amount,
         status: 'pending',
         createdAt: fine.issuedAt,
         userId: owner?._id?.toString()
       });
+      console.log(`[FINE-ISSUE] Sync service completed for ${fineId}`);
     } catch (syncError) {
-      console.error('Fine sync error:', syncError);
+      console.error('[FINE-ISSUE] Fine sync service error:', syncError);
+      // Don't fail the request if sync fails - it's secondary
     }
 
     await logAudit({
@@ -91,14 +118,20 @@ router.post('/issue', authMiddleware, requirePermission('fine:issue'), async (re
       resourceId: fine._id.toString(),
       metadata: {
         fineId: fine.fineId,
-        vehicleNumber,
+        vehicleNumber: normalizedNumber,
         amount,
-        currency: 'INR'
+        currency: 'INR',
+        ownerFound: !!owner
       }
     });
 
-    res.status(201).json(fine);
+    res.status(201).json({
+      success: true,
+      message: 'Fine issued successfully',
+      fine: savedFine
+    });
   } catch (error) {
+    console.error('[FINE-ISSUE] Error issuing fine:', error);
     await logAudit({
       req,
       action: 'fine.issue',
@@ -106,7 +139,7 @@ router.post('/issue', authMiddleware, requirePermission('fine:issue'), async (re
       status: 'failure',
       metadata: { error: error.message }
     });
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message, error: error.toString() });
   }
 });
 
