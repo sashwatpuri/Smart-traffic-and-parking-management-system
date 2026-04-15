@@ -28,6 +28,7 @@ import emergencyVehicleRoutes from './routes/emergencyRoutes.js';
 import parkingAmenitiesRoutes from './routes/parkingAmenities.js';
 import { initializeTrafficSimulation } from './services/trafficSimulator.js';
 import { ensureUploadDirs } from './services/uploadService.js';
+import { AdminCitizenSyncService } from './services/adminCitizenSyncService.js';
 import User from './models/User.js';
 import { env } from './config/env.js';
 
@@ -40,6 +41,9 @@ const io = new Server(httpServer, {
   pingTimeout: 60000,
   path: '/socket.io'
 });
+
+// Initialize Admin-Citizen Sync Service
+export const adminCitizenSyncService = new AdminCitizenSyncService();
 
 const corsOptions = {
   origin: env.CORS_ORIGIN === '*' ? true : env.CORS_ORIGIN
@@ -142,10 +146,25 @@ app.use('/api/admin-reports', adminReportsRoutes);
 app.use('/api/emergency-vehicles', emergencyVehicleRoutes);
 
 io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
+  console.log('🔗 Client connected:', socket.id);
+
+  // Listen for user registration with their ID
+  socket.on('register_user', (userId) => {
+    if (userId) {
+      adminCitizenSyncService.registerUserConnection(userId, socket.id);
+      socket.userId = userId;
+      console.log(`📱 User ${userId} registered to socket ${socket.id}`);
+      
+      // Join a room specific to this user for targeted messaging
+      socket.join(`user_${userId}`);
+    }
+  });
 
   socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
+    console.log('🔌 Client disconnected:', socket.id);
+    if (socket.userId) {
+      adminCitizenSyncService.unregisterUserConnection(socket.userId);
+    }
   });
 });
 

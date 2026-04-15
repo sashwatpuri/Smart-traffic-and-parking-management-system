@@ -58,6 +58,13 @@ export default function MyFines() {
 
     socket.on('connect', () => {
       console.log('[Socket.IO] ✅ Connected:', socket.id);
+      
+      // Register user with server for targeted messaging
+      const userId = localStorage.getItem('userId');
+      if (userId) {
+        socket.emit('register_user', userId);
+        console.log('[Socket.IO] 📱 Registered user:', userId);
+      }
     });
 
     socket.on('new-fine', (data) => {
@@ -77,13 +84,14 @@ export default function MyFines() {
       }, 500);
     });
 
-      socket.on('citizen_challan_notification', (data) => {
-         console.log('[Socket.IO] 📨 citizen_challan_notification received:', data);
-         setTimeout(() => {
-            console.log('[Socket.IO] Refreshing fines list after challan sync...');
-            fetchFines();
-         }, 500);
-      });
+    socket.on('citizen_challan_notification', (data) => {
+      console.log('[Socket.IO] 📨 citizen_challan_notification received:', data);
+      toast.info(`✅ New traffic fine received: ₹${data.challan?.fineAmount} for ${data.challan?.violationType}`);
+      setTimeout(() => {
+        console.log('[Socket.IO] Refreshing fines list after challan sync...');
+        fetchFines();
+      }, 500);
+    });
 
     socket.on('disconnect', () => {
       console.warn('[Socket.IO] ⚠️ Disconnected');

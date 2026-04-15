@@ -3,8 +3,8 @@ import IllegalParking from '../models/IllegalParking.js';
 import Fine from '../models/Fine.js';
 import User from '../models/User.js';
 import illegalParkingDetector from '../services/illegalParkingDetector.js';
-import { authMiddleware, adminOnly } from '../middleware/auth.js';
-import { io } from '../server.js';
+import { authMiddleware } from '../middleware/auth.js';
+import { io, adminCitizenSyncService } from '../server.js';
 
 const router = express.Router();
 
@@ -203,6 +203,25 @@ router.post('/:id/issue-fine', authMiddleware, async (req, res) => {
 
     const payload = toPublic(violation.toObject());
     io.emit('illegal-parking-fine-issued', { violation: payload, fine });
+    
+    // Sync with citizen portal
+    try {
+      await adminCitizenSyncService.syncChallan({
+        challanNumber: fine.fineId,
+        vehicleNumber: violation.licensePlate,
+        violation: violation.violationType,
+        fineAmount: violation.fineAmount,
+        status: 'pending',
+        createdAt: fine.issuedAt,
+        userId: owner?._id?.toString(),
+        location: violation.location,
+        imageUrl: violation.imageUrl
+      });
+      console.log(`[ILLEGAL-PARKING] Synced fine ${fineId} with citizen portal`);
+    } catch (syncError) {
+      console.error('[ILLEGAL-PARKING] Sync error:', syncError.message);
+    }
+    
     return res.json({ violation: payload, fine });
   } catch (error) {
     return res.status(500).json({ message: error.message });

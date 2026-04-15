@@ -67,6 +67,9 @@ function App() {
       localStorage.setItem('refreshToken', payload.refreshToken);
     }
     localStorage.setItem('user', JSON.stringify(payload.user));
+    if (payload.user?.id) {
+      localStorage.setItem('userId', payload.user.id);
+    }
     setUser(payload.user);
   };
 

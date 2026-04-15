@@ -57,8 +57,13 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 });
 
-router.post('/issue', authMiddleware, requirePermission('fine:issue'), async (req, res) => {
+router.post('/issue', authMiddleware, async (req, res) => {
   try {
+    // Check if user is admin
+    if (req.user?.role !== 'admin') {
+      return res.status(403).json({ message: 'Only admins can issue fines' });
+    }
+
     let { vehicleNumber, violationType, amount, location, imageUrl } = req.body;
     
     // Validate required fields
