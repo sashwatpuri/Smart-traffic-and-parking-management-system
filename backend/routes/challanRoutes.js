@@ -6,6 +6,7 @@
 import express from 'express';
 import { authMiddleware } from '../middleware/auth.js';
 import Challan from '../models/Challan.js';
+import User from '../models/User.js';
 import { adminCitizenSyncService } from '../services/adminCitizenSyncService.js';
 import { io } from '../server.js';
 
@@ -17,10 +18,17 @@ const router = express.Router();
  */
 router.get('/my-challans', authMiddleware, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     const { status, page = 1, limit = 10 } = req.query;
+    const user = await User.findById(userId);
+    const vehicleNumber = user?.vehicleNumber?.replace(/[^A-Z0-9]/gi, '').toUpperCase();
 
-    let query = { 'vehicleOwner.userId': userId };
+    const query = {
+      $or: [
+        { 'vehicleOwner.userId': userId },
+        ...(vehicleNumber ? [{ vehicleNumber }] : [])
+      ]
+    };
     if (status) {
       query.status = status;
     }
@@ -79,8 +87,12 @@ router.get('/:challanId', authMiddleware, async (req, res) => {
     }
 
     // Check authorization
-    if (challan.vehicleOwner?.userId?.toString() !== req.user.id && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Unauthorized' });
+    if (challan.vehicleOwner?.userId?.toString() !== req.user.userId && req.user.role !== 'admin') {
+      const user = await User.findById(req.user.userId);
+      const vehicleNumber = user?.vehicleNumber?.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+      if (challan.vehicleNumber !== vehicleNumber) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
     }
 
     res.json({
@@ -125,7 +137,7 @@ router.post('/:challanId/challenge', authMiddleware, async (req, res) => {
   try {
     const { challanId } = req.params;
     const { description, evidence } = req.body;
-    const userId = req.user.id;
+    const userId = req.user.userId;
 
     if (!description) {
       return res.status(400).json({
@@ -141,7 +153,11 @@ router.post('/:challanId/challenge', authMiddleware, async (req, res) => {
 
     // Check authorization
     if (challan.vehicleOwner?.userId?.toString() !== userId) {
-      return res.status(403).json({ error: 'Unauthorized' });
+      const user = await User.findById(userId);
+      const vehicleNumber = user?.vehicleNumber?.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+      if (challan.vehicleNumber !== vehicleNumber) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
     }
 
     // Check if already challenged
@@ -287,8 +303,12 @@ router.get('/:challanId/payment-options', authMiddleware, async (req, res) => {
     }
 
     // Check authorization
-    if (challan.vehicleOwner?.userId?.toString() !== req.user.id && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Unauthorized' });
+    if (challan.vehicleOwner?.userId?.toString() !== req.user.userId && req.user.role !== 'admin') {
+      const user = await User.findById(req.user.userId);
+      const vehicleNumber = user?.vehicleNumber?.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+      if (challan.vehicleNumber !== vehicleNumber) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
     }
 
     const paymentOptions = {

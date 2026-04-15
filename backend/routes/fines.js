@@ -1,5 +1,6 @@
 import express from 'express';
 import Fine from '../models/Fine.js';
+import Challan from '../models/Challan.js';
 import User from '../models/User.js';
 import { io } from '../server.js';
 import { authMiddleware, requirePermission } from '../middleware/auth.js';
@@ -8,6 +9,23 @@ import { logAudit } from '../services/auditLogger.js';
 import { adminCitizenSyncService } from '../services/adminCitizenSyncService.js';
 
 const router = express.Router();
+
+function mapFineViolationToChallanType(violationType) {
+  const typeMap = {
+    high_speed: 'speeding',
+    no_helmet: 'helmet_violation',
+    rush_driving: 'rash_driving',
+    lane_violation: 'lane_violation',
+    signal_violation: 'signal_violation',
+    no_parking_zone: 'no_parking_zone',
+    illegal_parking: 'illegal_parking',
+    double_parking: 'wrong_parking',
+    overtime_parking: 'wrong_parking',
+    wrong_way: 'rash_driving'
+  };
+
+  return typeMap[violationType] || 'illegal_parking';
+}
 
 router.get('/', authMiddleware, async (req, res) => {
   try {
@@ -84,6 +102,40 @@ router.post('/issue', authMiddleware, requirePermission('fine:issue'), async (re
     const savedFine = await fine.save();
     console.log(`[FINE-ISSUE] ✅ Fine created: ${fineId} for ₹${amount}`);
 
+    await Challan.findOneAndUpdate(
+      { challanNumber: fineId },
+      {
+        $set: {
+          challanNumber: fineId,
+          vehicleOwner: owner ? {
+            userId: owner._id,
+            name: owner.name,
+            email: owner.email,
+            phone: owner.phone,
+            vehicleNumber: owner.vehicleNumber
+          } : undefined,
+          vehicleNumber: normalizedNumber,
+          ownerPhone: owner?.phone,
+          violationType: mapFineViolationToChallanType(violationType),
+          violationLocation: typeof location === 'string' ? location : location?.name || 'Unknown Location',
+          latitude: typeof location === 'object' ? location?.lat : undefined,
+          longitude: typeof location === 'object' ? location?.lng : undefined,
+          violationDateTime: fine.issuedAt,
+          imageUrl,
+          severity: fine.severity,
+          fineAmount: amount,
+          description: `Fine issued for ${violationType.replace(/_/g, ' ')}`,
+          status: 'issued',
+          paymentStatus: 'pending',
+          issuedBy: req.user.userId,
+          issuedAt: fine.issuedAt,
+          eChallanNumber: fine.fineId,
+          notes: 'Mirrored from admin fine issuance'
+        }
+      },
+      { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true }
+    );
+
     // Notify citizen in real-time - broadcast to all clients
     io.emit('new-fine', {
         userId: owner?._id?.toString(),
@@ -103,7 +155,9 @@ router.post('/issue', authMiddleware, requirePermission('fine:issue'), async (re
         fineAmount: amount,
         status: 'pending',
         createdAt: fine.issuedAt,
-        userId: owner?._id?.toString()
+        userId: owner?._id?.toString(),
+        location,
+        imageUrl
       });
       console.log(`[FINE-ISSUE] Sync service completed for ${fineId}`);
     } catch (syncError) {

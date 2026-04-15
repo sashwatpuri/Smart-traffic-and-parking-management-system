@@ -8,6 +8,27 @@ import Challan from '../models/Challan.js';
 import User from '../models/User.js';
 import { io } from '../server.js';
 
+function normalizeVehicleNumber(vehicleNumber) {
+  return (vehicleNumber || '').replace(/[^A-Z0-9]/gi, '').toUpperCase();
+}
+
+function mapViolationToChallanType(violationType) {
+  const typeMap = {
+    high_speed: 'speeding',
+    no_helmet: 'helmet_violation',
+    rush_driving: 'rash_driving',
+    lane_violation: 'lane_violation',
+    signal_violation: 'signal_violation',
+    no_parking_zone: 'no_parking_zone',
+    illegal_parking: 'illegal_parking',
+    double_parking: 'wrong_parking',
+    overtime_parking: 'wrong_parking',
+    wrong_way: 'rash_driving'
+  };
+
+  return typeMap[violationType] || 'illegal_parking';
+}
+
 export class AdminCitizenSyncService {
   constructor() {
     this.userSocketMap = new Map(); // Track online users
@@ -91,36 +112,68 @@ export class AdminCitizenSyncService {
    */
   async syncChallan(challan) {
     try {
-      const { vehicleNumber, violation, fineAmount, challanNumber, status, userId, citizedEmail } = challan;
+      const { vehicleNumber, violation, fineAmount, challanNumber, status, userId, citizedEmail, createdAt, location, imageUrl } = challan;
+      const normalizedVehicleNumber = normalizeVehicleNumber(vehicleNumber);
 
-      // Find citizen by vehicle number or email
-      const citizen = await User.findOne({
-        $or: [
-          { 'vehicles.number': vehicleNumber },
-          { email: citizedEmail }
-        ]
-      });
+      const citizen = userId
+        ? await User.findById(userId)
+        : await User.findOne({
+            $or: [
+              { vehicleNumber: normalizedVehicleNumber },
+              { email: citizedEmail },
+              { vehicleNumber }
+            ]
+          });
 
       if (!citizen) {
         console.warn(`⚠️ Citizen not found for vehicle ${vehicleNumber}`);
         return false;
       }
 
-      const challanData = {
-        challanNumber,
-        vehicleNumber,
-        violationType: violation,
-        fineAmount,
-        status,
-        generatedAt: challan.createdAt,
-        dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000) // 15 days to pay
+      const resolvedChallanNumber = challanNumber || `FINE-${Date.now()}`;
+      const ownerData = {
+        userId: citizen._id,
+        name: citizen.name,
+        email: citizen.email,
+        phone: citizen.phone,
+        vehicleNumber: citizen.vehicleNumber || normalizedVehicleNumber || vehicleNumber
       };
+
+      const challanData = {
+        challanNumber: resolvedChallanNumber,
+        vehicleOwner: ownerData,
+        vehicleNumber: ownerData.vehicleNumber,
+        violationType: mapViolationToChallanType(violation),
+        violationLocation: typeof location === 'string' ? location : location?.name || 'Unknown Location',
+        violationDateTime: createdAt || new Date(),
+        imageUrl,
+        fineAmount,
+        description: `Fine issued for ${violation}`,
+        status: status || 'issued',
+        paymentStatus: status === 'paid' ? 'completed' : 'pending',
+        eChallanNumber: resolvedChallanNumber,
+        issuedAt: createdAt || new Date()
+      };
+
+      const savedChallan = await Challan.findOneAndUpdate(
+        { challanNumber: resolvedChallanNumber },
+        { $set: challanData },
+        { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true }
+      );
 
       // Broadcast to Admin Dashboard (Violations Tab)
       io.emit('admin_challan_generated', {
         type: 'new_challan',
-        challan: challanData,
-        message: `🎟️ New challan issued: ${vehicleNumber} (${violation})`,
+        challan: {
+          challanNumber: savedChallan.challanNumber,
+          vehicleNumber: savedChallan.vehicleNumber,
+          violationType: savedChallan.violationType,
+          fineAmount: savedChallan.fineAmount,
+          status: savedChallan.status,
+          generatedAt: savedChallan.violationDateTime,
+          dueDate: savedChallan.dueDate
+        },
+        message: `🎟️ New challan issued: ${normalizedVehicleNumber || vehicleNumber} (${violation})`,
         fine: fineAmount
       });
 
@@ -129,16 +182,24 @@ export class AdminCitizenSyncService {
       if (citizenSocketId) {
         io.to(citizenSocketId).emit('citizen_challan_notification', {
           type: 'challan_received',
-          challan: challanData,
-          message: `⚠️ Traffic violation challan issued for ${vehicleNumber}`,
-          dueDate: challanData.dueDate,
-          paymentLink: `/citizen/payment/challan/${challanNumber}`
+          challan: {
+            challanNumber: savedChallan.challanNumber,
+            vehicleNumber: savedChallan.vehicleNumber,
+            violationType: savedChallan.violationType,
+            fineAmount: savedChallan.fineAmount,
+            status: savedChallan.status,
+            generatedAt: savedChallan.violationDateTime,
+            dueDate: savedChallan.dueDate
+          },
+          message: `⚠️ Traffic violation challan issued for ${savedChallan.vehicleNumber}`,
+          dueDate: savedChallan.dueDate,
+          paymentLink: `/citizen/payment/challan/${savedChallan.challanNumber}`
         });
       }
 
-      console.log(`✅ Challan synced: ${challanNumber} for citizen ${citizen.email}`);
+      console.log(`✅ Challan synced: ${savedChallan.challanNumber} for citizen ${citizen.email}`);
 
-      return true;
+      return savedChallan;
     } catch (error) {
       console.error('Challan sync error:', error);
       throw error;
@@ -202,7 +263,9 @@ export class AdminCitizenSyncService {
       });
 
       // Notify citizen
-      const citizen = await User.findOne({ 'vehicles.number': challan.vehicleNumber });
+      const citizen = challan.vehicleOwner?.userId
+        ? await User.findById(challan.vehicleOwner.userId)
+        : await User.findOne({ vehicleNumber: challan.vehicleNumber });
       if (citizen) {
         const citizenSocketId = this.userSocketMap.get(citizen._id.toString());
         if (citizenSocketId) {

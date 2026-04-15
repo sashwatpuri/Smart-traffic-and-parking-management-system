@@ -7,6 +7,23 @@ const challanSchema = new mongoose.Schema({
     unique: true,
     index: true
   },
+  vehicleOwner: {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      index: true
+    },
+    name: String,
+    email: String,
+    phone: String,
+    vehicleNumber: {
+      type: String,
+      uppercase: true,
+      trim: true,
+      index: true
+    },
+    address: String
+  },
   vehicleNumber: {
     type: String,
     required: true,

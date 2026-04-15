@@ -77,6 +77,14 @@ export default function MyFines() {
       }, 500);
     });
 
+      socket.on('citizen_challan_notification', (data) => {
+         console.log('[Socket.IO] 📨 citizen_challan_notification received:', data);
+         setTimeout(() => {
+            console.log('[Socket.IO] Refreshing fines list after challan sync...');
+            fetchFines();
+         }, 500);
+      });
+
     socket.on('disconnect', () => {
       console.warn('[Socket.IO] ⚠️ Disconnected');
     });
