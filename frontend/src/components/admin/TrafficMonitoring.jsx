@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { AlertTriangle, Bot, Camera, ThermometerSun, CalendarRange, RefreshCcw } from 'lucide-react';
+import { AlertTriangle, Bot, Camera, ThermometerSun, RefreshCcw } from 'lucide-react';
 
 const presetTimings = {
-  normal: { label: 'Normal', green: 30, yellow: 5, red: 30 },
+  weather_auto: { label: 'Weather Auto', green: 30, yellow: 5, red: 30 },
   high_heat: { label: 'High Heat', green: 25, yellow: 5, red: 30 },
   extreme_heat: { label: 'Extreme Heat', green: 20, yellow: 5, red: 35 },
   event: { label: 'Large Event / Rally', green: 20, yellow: 5, red: 60 }
@@ -13,7 +13,7 @@ const presetTimings = {
 export default function TrafficMonitoring() {
   // Global control mode state
   const [controlMode, setControlMode] = useState('Automatic'); // 'Automatic' | 'Manual'
-  const [signalPreset, setSignalPreset] = useState('high_heat');
+  const [signalPreset, setSignalPreset] = useState('weather_auto');
 
   // Alerts State
   const [alerts, setAlerts] = useState([
@@ -89,64 +89,81 @@ export default function TrafficMonitoring() {
   };
 
   const applyZoneTimingPreset = async () => {
-    const selectedTimings = presetTimings[signalPreset] || presetTimings.normal;
-
-    setZones(prevZones => prevZones.map(zone => {
-      if (zone.id !== selectedZoneId) return zone;
-
-      const updatedTimer = zone.signal === 'Green'
-        ? selectedTimings.green
-        : zone.signal === 'Yellow'
-          ? selectedTimings.yellow
-          : selectedTimings.red;
-
-      return {
-        ...zone,
-        timer: updatedTimer,
-        timings: selectedTimings,
-        overrideActive: false
-      };
-    }));
-
     const targetZone = zones.find(zone => zone.id === selectedZoneId);
-    if (targetZone?.signalId) {
-      try {
-        await axios.post(`/api/traffic-signals/${targetZone.signalId}/apply-timing-preset`, {
-          preset: signalPreset,
-          timings: selectedTimings
-        });
-        toast.success(`Applied ${presetTimings[signalPreset].label} timing preset`);
-      } catch (error) {
-        toast.error(error.response?.data?.message || 'Failed to apply timing preset');
-      }
-    } else {
-      toast.success('Timing preset updated in the dashboard preview');
+
+    if (!targetZone?.signalId) {
+      toast.error('No live signal is mapped to this zone');
+      return;
     }
-  };
 
-  const clearEventOverride = async () => {
-    const targetZone = zones.find(zone => zone.id === selectedZoneId);
+    try {
+      if (signalPreset === 'weather_auto') {
+        const { data } = await axios.post(`/api/weather-signals/${targetZone.signalId}/apply-weather-timing`);
 
-    setZones(prevZones => prevZones.map(zone => {
-      if (zone.id !== selectedZoneId) return zone;
-      return {
-        ...zone,
-        overrideActive: false,
-        overrideName: null
-      };
-    }));
+        setZones(prevZones => prevZones.map(zone => {
+          if (zone.id !== selectedZoneId) return zone;
+          return {
+            ...zone,
+            timer: data.signal.currentTimer,
+            timings: data.signal.timings,
+            overrideActive: false,
+            overrideName: null
+          };
+        }));
 
-    setControlMode('Automatic');
-
-    if (targetZone?.signalId) {
-      try {
-        await axios.delete(`/api/traffic-signals/${targetZone.signalId}/event-override`);
-        toast.success('Event override cleared');
-      } catch (error) {
-        toast.error(error.response?.data?.message || 'Failed to clear event override');
+        const temperature = Math.round(data.weatherFactors.temperature);
+        toast.success(`Weather analyzed at ${temperature}°C and timings updated`);
+        return;
       }
-    } else {
-      toast.success('Event override cleared in the dashboard preview');
+
+      if (signalPreset === 'event') {
+        const eventTimings = presetTimings.event;
+        await axios.post(`/api/traffic-signals/${targetZone.signalId}/event-override`, {
+          eventName: 'Large Event / Rally',
+          reason: 'Event traffic control',
+          redDuration: eventTimings.red,
+          yellowDuration: eventTimings.yellow,
+          greenDuration: eventTimings.green,
+          durationMinutes: 30
+        });
+
+        setControlMode('Manual');
+        setZones(prevZones => prevZones.map(zone => {
+          if (zone.id !== selectedZoneId) return zone;
+          return {
+            ...zone,
+            signal: 'Red',
+            timer: eventTimings.red,
+            timings: eventTimings,
+            overrideActive: true,
+            overrideName: 'Large Event / Rally'
+          };
+        }));
+
+        toast.success('Event override activated');
+        return;
+      }
+
+      const selectedTimings = presetTimings[signalPreset] || presetTimings.high_heat;
+      const { data } = await axios.post(`/api/traffic-signals/${targetZone.signalId}/apply-timing-preset`, {
+        preset: signalPreset,
+        timings: selectedTimings
+      });
+
+      setZones(prevZones => prevZones.map(zone => {
+        if (zone.id !== selectedZoneId) return zone;
+        return {
+          ...zone,
+          timer: data.signal?.currentTimer || selectedTimings.red,
+          timings: data.signal?.timings || selectedTimings,
+          overrideActive: false,
+          overrideName: null
+        };
+      }));
+
+      toast.success(`Applied ${presetTimings[signalPreset].label} timing preset`);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to apply weather timing');
     }
   };
 
@@ -428,9 +445,6 @@ export default function TrafficMonitoring() {
                       {controlMode === 'Manual' && (
                         <p className="text-xs text-slate-500">Click on the traffic light indicators to manually switch the signal.</p>
                       )}
-                        {activeZone?.overrideActive && (
-                          <p className="text-xs font-bold text-red-600">Event override active: {activeZone.overrideName || 'Large event'}</p>
-                        )}
                    </div>
                 </div>
 
@@ -438,7 +452,7 @@ export default function TrafficMonitoring() {
                  <div className="rounded-2xl bg-amber-50 border border-amber-100 p-4">
                    <div className="flex items-center gap-2 mb-3">
                      <ThermometerSun className="w-4 h-4 text-amber-600" />
-                    <h4 className="font-black text-amber-700 text-sm uppercase tracking-widest">Timing Control</h4>
+                    <h4 className="font-black text-amber-700 text-sm uppercase tracking-widest">Weather Timing</h4>
                    </div>
                    <div className="flex flex-col gap-3">
                      <select
@@ -456,8 +470,11 @@ export default function TrafficMonitoring() {
                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-black uppercase tracking-widest text-white hover:bg-amber-700 transition"
                      >
                        <RefreshCcw className="w-4 h-4" />
-                       Apply preset
+                       Analyze & apply
                      </button>
+                     <p className="text-xs text-amber-700/80">
+                       Weather Auto reads the live temperature and adjusts the signal timings automatically.
+                     </p>
                    </div>
                  </div>
                </div>

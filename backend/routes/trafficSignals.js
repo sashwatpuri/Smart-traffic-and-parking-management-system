@@ -8,8 +8,17 @@ import TrafficSignal from '../models/TrafficSignal.js';
 import MLDetectionLog from '../models/MLDetectionLog.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { io } from '../server.js';
+import mongoose from 'mongoose';
 
 const router = express.Router();
+
+async function findSignalByParam(signalParam) {
+  if (mongoose.Types.ObjectId.isValid(signalParam)) {
+    const byId = await TrafficSignal.findById(signalParam);
+    if (byId) return byId;
+  }
+  return TrafficSignal.findOne({ signalId: signalParam });
+}
 
 function getPresetTimings(preset) {
   switch ((preset || '').toLowerCase()) {
@@ -86,7 +95,7 @@ router.get('/', authMiddleware, async (req, res) => {
  */
 router.get('/:signalId', authMiddleware, async (req, res) => {
   try {
-    const signal = await TrafficSignal.findById(req.params.signalId);
+    const signal = await findSignalByParam(req.params.signalId);
 
     if (!signal) {
       return res.status(404).json({ message: 'Signal not found' });
@@ -111,7 +120,7 @@ router.patch('/:signalId/status', authMiddleware, async (req, res) => {
       return res.status(400).json({ message: 'Invalid signal status' });
     }
 
-    const signal = await TrafficSignal.findById(req.params.signalId);
+    const signal = await findSignalByParam(req.params.signalId);
 
     if (!signal) {
       return res.status(404).json({ message: 'Signal not found' });
@@ -155,7 +164,7 @@ router.post('/:signalId/apply-timing-preset', authMiddleware, async (req, res) =
 
     const { preset, timings } = req.body;
 
-    const signal = await TrafficSignal.findById(req.params.signalId);
+    const signal = await findSignalByParam(req.params.signalId);
     if (!signal) {
       return res.status(404).json({ message: 'Signal not found' });
     }
@@ -216,7 +225,7 @@ router.post('/:signalId/event-override', authMiddleware, async (req, res) => {
 
     const { eventName, redDuration = 60, yellowDuration = 5, greenDuration = 20, durationMinutes = 30, reason } = req.body;
 
-    const signal = await TrafficSignal.findById(req.params.signalId);
+    const signal = await findSignalByParam(req.params.signalId);
     if (!signal) {
       return res.status(404).json({ message: 'Signal not found' });
     }
@@ -272,7 +281,7 @@ router.delete('/:signalId/event-override', authMiddleware, async (req, res) => {
       return res.status(403).json({ message: 'Admin access required' });
     }
 
-    const signal = await TrafficSignal.findById(req.params.signalId);
+    const signal = await findSignalByParam(req.params.signalId);
     if (!signal) {
       return res.status(404).json({ message: 'Signal not found' });
     }
@@ -318,7 +327,7 @@ router.post('/:signalId/analyze-congestion', authMiddleware, async (req, res) =>
   try {
     const { vehicleCount, congestionLevel, cameraFeed } = req.body;
 
-    const signal = await TrafficSignal.findById(req.params.signalId);
+    const signal = await findSignalByParam(req.params.signalId);
 
     if (!signal) {
       return res.status(404).json({ message: 'Signal not found' });
@@ -366,7 +375,7 @@ router.post('/:signalId/apply-adaptive-timing', authMiddleware, async (req, res)
   try {
     const { recommendedDuration, congestionLevel } = req.body;
 
-    const signal = await TrafficSignal.findById(req.params.signalId);
+    const signal = await findSignalByParam(req.params.signalId);
 
     if (!signal) {
       return res.status(404).json({ message: 'Signal not found' });
@@ -419,7 +428,7 @@ router.patch('/:signalId/toggle-adaptive-control', authMiddleware, async (req, r
   try {
     const { adaptiveControl } = req.body;
 
-    const signal = await TrafficSignal.findById(req.params.signalId);
+    const signal = await findSignalByParam(req.params.signalId);
 
     if (!signal) {
       return res.status(404).json({ message: 'Signal not found' });

@@ -41,85 +41,94 @@ export async function initializeTrafficSimulation(io) {
 
   // ── Initialize traffic signals ──────────────────────────────────────────────
   for (const intersection of INTERSECTIONS) {
-    const exists = await TrafficSignal.findOne({ signalId: intersection.signalId });
-    if (!exists) {
-      await TrafficSignal.create({
-        signalId: intersection.signalId,
-        name: intersection.name,
-        location: {
+    await TrafficSignal.updateOne(
+      { signalId: intersection.signalId },
+      {
+        $setOnInsert: {
+          signalId: intersection.signalId,
           name: intersection.name,
-          lat: intersection.lat,
-          lng: intersection.lng
-        },
-        status: 'green',
-        currentTimer: 30,
-        timings: { green: 30, yellow: 5, red: 30 },
-        vehicleCount: Math.floor(Math.random() * 50),
-        congestionLevel: 'low',
-        connectedSignals: INTERSECTIONS
-          .filter(i => i.signalId !== intersection.signalId)
-          .slice(0, 2)
-          .map(i => i.signalId),
-        mode: 'auto',
-        isActive: true,
-        lastUpdated: new Date()
-      });
-    }
+          location: {
+            name: intersection.name,
+            lat: intersection.lat,
+            lng: intersection.lng
+          },
+          status: 'green',
+          currentTimer: 30,
+          timings: { green: 30, yellow: 5, red: 30 },
+          vehicleCount: Math.floor(Math.random() * 50),
+          congestionLevel: 'low',
+          connectedSignals: INTERSECTIONS
+            .filter(i => i.signalId !== intersection.signalId)
+            .slice(0, 2)
+            .map(i => i.signalId),
+          mode: 'auto',
+          isActive: true,
+          lastUpdated: new Date()
+        }
+      },
+      { upsert: true }
+    );
   }
 
   // ── Initialize parking zones & spots ────────────────────────────────────────
   for (const zoneData of PARKING_ZONES) {
     // Create zone if it doesn't exist
-    const zoneExists = await ParkingZone.findOne({ zoneId: zoneData.zoneId });
-    if (!zoneExists) {
-      await ParkingZone.create({
-        zoneId: zoneData.zoneId,
-        name: zoneData.zone,
-        location: {
+    await ParkingZone.updateOne(
+      { zoneId: zoneData.zoneId },
+      {
+        $setOnInsert: {
+          zoneId: zoneData.zoneId,
           name: zoneData.zone,
-          lat: zoneData.lat,
-          lng: zoneData.lng
-        },
-        totalSpots: zoneData.count,
-        pricePerHour: zoneData.pricePerHour,
-        currency: 'INR',
-        isActive: true,
-        stats: {
-          available: zoneData.count,
-          occupied: 0,
-          reserved: 0,
-          revenue: 0
+          location: {
+            name: zoneData.zone,
+            lat: zoneData.lat,
+            lng: zoneData.lng
+          },
+          totalSpots: zoneData.count,
+          pricePerHour: zoneData.pricePerHour,
+          currency: 'INR',
+          isActive: true,
+          stats: {
+            available: zoneData.count,
+            occupied: 0,
+            reserved: 0,
+            revenue: 0
+          }
         }
-      });
-    }
+      },
+      { upsert: true }
+    );
 
     // Create spots for the zone
     for (let i = 1; i <= zoneData.count; i++) {
       const spotId = `${zoneData.zoneId}-${String(i).padStart(3, '0')}`;
-      const exists = await ParkingSpot.findOne({ spotId });
-      if (!exists) {
-        let type = 'regular';
-        if (i <= 2) type = 'disabled';
-        else if (i === 3) type = 'ev';
+      let type = 'regular';
+      if (i <= 2) type = 'disabled';
+      else if (i === 3) type = 'ev';
 
-        await ParkingSpot.create({
-          spotId,
-          zoneId: zoneData.zoneId,
-          zone: zoneData.zone,
-          location: {
-            name: `${zoneData.zone} Parking`,
-            lat: zoneData.lat + (Math.random() - 0.5) * 0.002,
-            lng: zoneData.lng + (Math.random() - 0.5) * 0.002
-          },
-          status: Math.random() > 0.3 ? 'available' : 'occupied',
-          type,
-          vehicleCategory: i <= (zoneData.count * 0.4) ? '2-wheeler' : '4-wheeler',
-          floor: Math.floor(i / 20),
-          pricePerHour: i <= (zoneData.count * 0.4) ? Math.floor(zoneData.pricePerHour * 0.5) : zoneData.pricePerHour,
-          currency: 'INR',
-          isActive: true
-        });
-      }
+      await ParkingSpot.updateOne(
+        { spotId },
+        {
+          $setOnInsert: {
+            spotId,
+            zoneId: zoneData.zoneId,
+            zone: zoneData.zone,
+            location: {
+              name: `${zoneData.zone} Parking`,
+              lat: zoneData.lat + (Math.random() - 0.5) * 0.002,
+              lng: zoneData.lng + (Math.random() - 0.5) * 0.002
+            },
+            status: Math.random() > 0.3 ? 'available' : 'occupied',
+            type,
+            vehicleCategory: i <= (zoneData.count * 0.4) ? '2-wheeler' : '4-wheeler',
+            floor: Math.floor(i / 20),
+            pricePerHour: i <= (zoneData.count * 0.4) ? Math.floor(zoneData.pricePerHour * 0.5) : zoneData.pricePerHour,
+            currency: 'INR',
+            isActive: true
+          }
+        },
+        { upsert: true }
+      );
     }
   }
 

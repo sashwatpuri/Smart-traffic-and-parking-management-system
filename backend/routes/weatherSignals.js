@@ -8,6 +8,7 @@ import TrafficSignal from '../models/TrafficSignal.js';
 import { WeatherAdaptiveSignal } from '../services/weatherAdaptiveSignal.js';
 import { adminCitizenSyncService } from '../services/adminCitizenSyncService.js';
 import { authMiddleware } from '../middleware/auth.js';
+import { io } from '../server.js';
 
 const router = express.Router();
 const weatherService = new WeatherAdaptiveSignal();
@@ -160,6 +161,93 @@ router.post('/update-weather', authMiddleware, async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating weather signals:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * POST /api/weather-signals/:signalId/apply-weather-timing
+ * Analyze live weather for a single signal and persist the adjusted timings
+ */
+router.post('/:signalId/apply-weather-timing', authMiddleware, async (req, res) => {
+  try {
+    if (req.user?.role !== 'admin') {
+      return res.status(403).json({ message: 'Admin access required' });
+    }
+
+    const { signalId } = req.params;
+    const signal = await TrafficSignal.findOne({ signalId });
+
+    if (!signal) {
+      return res.status(404).json({ message: 'Signal not found' });
+    }
+
+    if (!signal.location?.lat || !signal.location?.lng) {
+      return res.status(400).json({ message: 'Signal location is required for weather analysis' });
+    }
+
+    const weatherData = await weatherService.getWeatherData(signal.location.lat, signal.location.lng);
+    const { adjustedTimings, weatherFactors } = weatherService.calculateAdaptiveTimings(signal.timings, weatherData);
+
+    signal.timings = adjustedTimings;
+    signal.currentTimer = signal.status === 'green'
+      ? adjustedTimings.green
+      : signal.status === 'yellow'
+        ? adjustedTimings.yellow
+        : adjustedTimings.red;
+    signal.mode = 'auto';
+    signal.weatherMetrics = {
+      ...(signal.weatherMetrics || {}),
+      temperature: weatherFactors.temperature,
+      humidity: weatherFactors.humidity,
+      rainIntensity: weatherFactors.isRaining ? 100 : 0,
+      windSpeed: weatherFactors.windSpeed,
+      weatherCondition: weatherFactors.isRaining ? 'rainy' : weatherFactors.temperature > 45 ? 'hot' : 'clear',
+      lastWeatherUpdate: new Date(),
+      timingAdjustment: {
+        reason: weatherFactors.adaptationReason,
+        greenAdjustment: adjustedTimings.green - 30,
+        yellowAdjustment: adjustedTimings.yellow - 5,
+        redAdjustment: adjustedTimings.red - 30
+      }
+    };
+    signal.lastUpdated = new Date();
+
+    await signal.save();
+
+    io.emit('signal_weather_update', {
+      signalId: signal.signalId,
+      zone: signal.location?.name || signal.signalId,
+      adjustedTimings,
+      weatherFactors,
+      timestamp: new Date()
+    });
+
+    io.emit('signal_timing_adjusted', {
+      signalId: signal._id,
+      location: signal.location,
+      status: signal.status,
+      timings: adjustedTimings,
+      preset: 'weather_analysis',
+      timestamp: new Date()
+    });
+
+    res.json({
+      success: true,
+      message: 'Weather-based timing applied',
+      signal: {
+        signalId: signal.signalId,
+        timings: adjustedTimings,
+        weatherMetrics: signal.weatherMetrics,
+        status: signal.status,
+        currentTimer: signal.currentTimer
+      },
+      weather: weatherData,
+      weatherFactors,
+      adjustedTimings
+    });
+  } catch (error) {
+    console.error('Error applying weather timing:', error);
     res.status(500).json({ error: error.message });
   }
 });
